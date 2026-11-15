@@ -1,4 +1,5 @@
 import type { CircuitGraph, SimulationReport } from '../../domain/circuit'
+import { panel, panelHeading } from '../../ui/styles'
 
 interface Props {
   graph: CircuitGraph
@@ -9,11 +10,8 @@ const fmt = (n: number, digits = 2) => n.toFixed(digits)
 
 export function CircuitDiagnostic({ graph, report }: Props) {
   return (
-    <section
-      aria-labelledby="diagnostic-heading"
-      className="rounded-lg border border-observatory-navy-lighter bg-observatory-navy-light p-4"
-    >
-      <h2 id="diagnostic-heading" className="mb-2 text-lg font-semibold text-observatory-gold">
+    <section aria-labelledby="diagnostic-heading" className={panel}>
+      <h2 id="diagnostic-heading" className={panelHeading}>
         Circuit diagnostic
       </h2>
       <dl className="mb-3 grid grid-cols-[auto,1fr] gap-x-3 gap-y-1 text-sm">

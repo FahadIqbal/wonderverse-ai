@@ -17,13 +17,14 @@ Build a circuit in 3D, watch a deterministic solver decide whether the lamp ligh
 - YouTube demo (under 3 minutes): `[TODO: YouTube URL]`
 
 ## Screenshots to upload
-Files are in `submission/screenshots/` (captured from the live URL in a clean browser context on 2026-11-15, desktop 1280 px wide; 03, 04 and 05 were retaken after the layout change on 2026-11-15, 01 and 02 were not retaken because the layout change does not affect them):
-1. `01-portal.png` - portal
-2. `02-mission-map.png` - mission map
-3. `03-mission1-lamp-lit-schematic.png` - mission 1, lamp lit, schematic view, objectives beside it (first screen, 1280x800)
-4. `04-mission1-3d-view.png` - mission 1, lamp lit, 3D bench, objectives beside it (first screen, 1280x800; the diagnostic table is below the fold)
-5. `05-completion-dialog.png` - "Mission complete: Complete the Loop"
-
+Files are in `submission/screenshots/` (captured with Playwright from a local production build of the visual-polish commit, clean browser context; desktop 1440x900 and mobile 390x844). They replace the earlier five:
+1. `desktop-01-portal.png`, `mobile-01-portal.png` - portal
+2. `desktop-02-map.png`, `mobile-02-map.png` - mission map, nothing completed
+3. `desktop-03-schematic-lit.png`, `mobile-03-schematic-lit.png` - mission 1 schematic, lamp lit (the red line is a rejected short-circuit attempt, shown on purpose)
+4. `desktop-04-3d.png`, `mobile-04-3d.png` - mission 1, 3D bench, lamp lit (software GL render)
+5. `desktop-05-completion.png`, `mobile-05-completion.png` - "Mission complete: Complete the Loop"
+6. `desktop-06-map-progress.png`, `mobile-06-map-progress.png` - map after mission 1
+7. `desktop-reduced-03-schematic-lit.png`, `mobile-reduced-03-schematic-lit.png` - same as 3 with reduced motion on
 `[TODO: pick the order and choose a thumbnail; add a mission 2 screenshot if you want one]`
 
 ## Inspiration

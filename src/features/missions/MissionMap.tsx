@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { MISSIONS, missionAvailability, missionIndex } from '../../domain/learning'
 import { ConfirmDialog } from '../../ui/ConfirmDialog'
-import { panel, primaryButton, secondaryButton } from '../../ui/styles'
+import { CheckIcon, LockIcon, PlayIcon, SparkIcon } from '../../ui/icons'
+import { badgeBase, badgeTone, panel, primaryButton, secondaryButton } from '../../ui/styles'
+import { MissionArt } from './MissionArt'
 import { eraseAllProgress } from '../session/persistence'
 import { useSessionStatus } from '../session/sessionStore'
 import { useMissionStore } from './missionStore'
@@ -27,13 +29,29 @@ export function MissionMap({ onOpen }: Props) {
     return phase === 'building' || phase === 'quiz'
   }
   return (
-    <section aria-labelledby="map-heading" className="mx-auto max-w-3xl">
+    <section aria-labelledby="map-heading" className="mx-auto max-w-5xl">
       <h1 id="map-heading" tabIndex={-1} className="mb-1 text-3xl font-bold text-observatory-gold outline-none">
         Electricity Lab missions
       </h1>
-      <p className="mb-4 text-sm text-slate-300" data-testid="map-progress">
+      <p className="mb-2 text-sm text-slate-300" data-testid="map-progress">
         {doneCount} of {MISSIONS.length} missions complete. Finish a mission to unlock the next one.
       </p>
+      <div
+        role="progressbar"
+        aria-label="Missions completed"
+        aria-valuemin={0}
+        aria-valuemax={MISSIONS.length}
+        aria-valuenow={doneCount}
+        aria-valuetext={`${doneCount} of ${MISSIONS.length} missions complete`}
+        className="mb-6 flex max-w-sm gap-1.5"
+      >
+        {MISSIONS.map(m => (
+          <span
+            key={m.id}
+            className={`h-2 flex-1 rounded-full ${completed.includes(m.id) ? 'bg-observatory-aqua' : 'bg-observatory-navy-lighter'}`}
+          />
+        ))}
+      </div>
       {loadOutcome === 'corrupt' || loadOutcome === 'unsupported-version' ? (
         <p role="status" className={`${panel} mb-4 text-sm text-slate-200`} data-testid="load-notice">
           Your saved progress could not be read, so you are starting fresh.
@@ -44,7 +62,7 @@ export function MissionMap({ onOpen }: Props) {
           This browser is not letting the lab save progress, so it will be lost when you close the page. You can still play.
         </p>
       )}
-      <ol className="space-y-3">
+      <ol className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-3">
         {MISSIONS.map(m => {
           const availability = missionAvailability(m.id, completed)
           const index = missionIndex(m.id)
@@ -58,19 +76,27 @@ export function MissionMap({ onOpen }: Props) {
                   ? 'In progress'
                   : 'Unlocked'
           const action = availability === 'completed' ? 'Review' : inProgress(m.id) ? 'Continue' : 'Start'
+          const tone = availability === 'completed' ? 'completed' : locked ? 'locked' : inProgress(m.id) ? 'in-progress' : 'unlocked'
+          const StatusIcon = availability === 'completed' ? CheckIcon : locked ? LockIcon : inProgress(m.id) ? SparkIcon : PlayIcon
           return (
-            <li key={m.id} data-testid={`map-${m.id}`} data-status={availability} className={panel}>
+            <li
+              key={m.id}
+              data-testid={`map-${m.id}`}
+              data-status={availability}
+              className={`${panel} flex flex-col gap-3 transition-transform duration-200 ${locked ? '' : 'hover:-translate-y-0.5 hover:border-observatory-aqua/60'}`}
+            >
+              <MissionArt index={index} />
+              <p id={`status-${m.id}`} className={`${badgeBase} ${badgeTone[tone]} self-start rounded-lg`}>
+                <StatusIcon className="h-4 w-4 shrink-0" />
+                <span>Status: {statusText}</span>
+              </p>
               <h2 className="text-xl font-semibold text-observatory-aqua">
                 Mission {index + 1}: {m.title}
               </h2>
-              <p className="mb-1 text-sm text-slate-200">{m.opening}</p>
-              <p id={`status-${m.id}`} className="mb-3 text-sm font-semibold text-slate-100">
-                <span aria-hidden="true">{availability === 'completed' ? '✔ ' : locked ? '🔒 ' : '▶ '}</span>
-                Status: {statusText}
-              </p>
+              <p className="flex-1 text-sm text-slate-200">{m.opening}</p>
               <button
                 type="button"
-                className={locked ? secondaryButton : primaryButton}
+                className={`${locked ? secondaryButton : primaryButton} w-full`}
                 disabled={locked}
                 aria-describedby={`status-${m.id}`}
                 onClick={() => {

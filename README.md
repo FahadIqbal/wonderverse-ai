@@ -55,7 +55,7 @@ The app works with no key and no backend. The tutor then uses the built-in **Loc
 - `submission/DEVPOST-SUBMISSION-FINAL.md`: Devpost text (has a `[TODO: YouTube URL]` placeholder).
 - `submission/DEMO-SCRIPT-FINAL.md`: timed demo script and pre-recording checklist. The video is not recorded yet.
 - `submission/COMPLIANCE-CHECKLIST.md`: per-item status, with the steps only a human can do.
-- `submission/screenshots/`: five screenshots of the live site.
+- `submission/screenshots/`: screenshots of the polished UI (desktop 1440x900 and mobile 390x844, plus reduced-motion variants of the schematic), captured from a local production build, not the live site.
 - `docs/19-KIRO-USAGE-RECORD.md`: what the repo shows about Kiro use, and what it cannot show.
 - `submission/ASSET-AND-LICENSE-REGISTER.md`: assets and licenses from repo evidence, with unverified items marked.
 

@@ -29,6 +29,8 @@ Scope: every interactive control in `src/`. "Status" is the state after T11. Che
 | Completion dialog (Next / Back / Close / Replay) | n/a | n/a | focus on heading, Tab wraps, Esc closes, background inert, focus restored | Fixed (shared `ModalShell`) |
 | View recap | shown when complete | n/a | Tab, Enter | OK |
 | Tutor input and Ask | disabled while loading, after completion, at the hint cap; reason text now also covers "not started" and "complete" | `aria-busy`, "Nova is looking...", error text, "offline hint" label | Tab, Enter | Fixed (reason text, 44px) |
+| Lab feedback line (`FeedbackBar`) | n/a | one `role=status` line in both views; errors add an alert icon, a coral border and the words "Connection rejected" (not colour only); shake only when motion is allowed | n/a | Restyled (visual polish pass) |
+| Mission map progress bar | n/a | `role=progressbar` with value text "N of 3 missions complete", same text shown above it | n/a | New |
 | Whole app crash | n/a | `AppErrorBoundary`: "Something went wrong", Try again, Reload | focus moves to the message | New |
 
 ## Checks and what they cover

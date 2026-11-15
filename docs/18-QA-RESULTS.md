@@ -122,3 +122,11 @@ Run on macOS after the fix:
 | `npm run e2e:ci`, run 2 | 74 passed, 19 skipped, 0 failed, 0 flaky |
 | `npx playwright test` (local Chrome) | 74 passed, 19 skipped, 0 failed |
 GitHub Actions on the fix commit 1ecffb0: run 43729342001 **success** (observed through the public API). Playwright job annotation: 74 passed, 19 skipped (59.2 s); web and tutor jobs success.
+## Visual polish pass (2026-11-16, macOS)
+| Command | Result |
+| --- | --- |
+| `npx tsc -b`, `npm run typecheck:e2e`, `npm run lint` | clean |
+| `npm run test:run` | 29 files, 281 tests passed (was 27 files, 263; the extra tests cover feedback motion hooks, calm gating in the schematic and the new contrast pairs) |
+| `npm run build` | built; main JS 300.50 kB, CSS 25.55 kB, 3D chunk 935.65 kB (before: 292.99, 16.09, 933.17) |
+| `caffeinate -i npm run e2e:ci` | 74 passed, 19 skipped, 0 failed |
+A first e2e run found one real failure (axe colour contrast on a button mid-transition, mobile project); fixed by removing the colour transition, then re-run green. A temporary screenshot spec (not committed) captured portal, map, mission 1 schematic, 3D, completion dialog and the map after completion at 1440x900 and 390x844, with reduced motion off and on, from the local production build with local Chrome and SwiftShader. The console guard saw no unexpected console output. With reduced motion on it asserted no `lamp-pulse`, `wire-snap`, `tick-pop` or `reject-shake` class and no shake on a rejected connection; with it off it asserted the lamp pulse (exactly one lit lamp) and the shake. Screenshots are in `submission/screenshots/` (14 files, largest 216 KB). Not a live-site capture; real GPU look not checked.

@@ -2,6 +2,8 @@ import type { KeyboardEvent } from 'react'
 import type { CircuitComponent, CircuitGraph, SimulationReport, Terminal } from '../../domain/circuit'
 import { PALETTE } from '../../ui/palette'
 import { terminalLabel, useLabStore } from './labStore'
+import { useRecentlyAdded, useRejectionPulse } from './useFeedbackMotion'
+import { useMotionPreference } from './useMotionPreference'
 
 interface Props {
   graph: CircuitGraph
@@ -26,7 +28,7 @@ const GOLD = PALETTE.gold
 const NAVY = PALETTE.navy
 const LABEL = PALETTE.text
 
-function Symbol({ c, lit }: { c: CircuitComponent; lit: boolean }) {
+function Symbol({ c, lit, pulse }: { c: CircuitComponent; lit: boolean; pulse: boolean }) {
   const { x, y } = center(c)
   switch (c.type) {
     case 'battery':
@@ -50,7 +52,8 @@ function Symbol({ c, lit }: { c: CircuitComponent; lit: boolean }) {
             r={26}
             fill={GOLD}
             opacity={lit ? 0.35 : 0}
-            className="transition-opacity duration-300"
+            className={`transition-opacity duration-300 ${lit && pulse ? 'lamp-pulse' : ''}`}
+            data-pulse={String(lit && pulse)}
             data-testid={`glow-${c.id}`}
           />
           <circle cx={x} cy={y} r={16} fill={lit ? GOLD : PALETTE.navyLight} stroke={lit ? GOLD : STROKE} strokeWidth={3} />
@@ -120,6 +123,11 @@ export function SchematicCanvas({ graph, report }: Props) {
   const removeComponent = useLabStore(s => s.removeComponent)
   const removeWire = useLabStore(s => s.removeWire)
   const toggleSwitch = useLabStore(s => s.toggleSwitch)
+  const feedback = useLabStore(s => s.feedback)
+  const { calm } = useMotionPreference()
+  // Motion is cosmetic and optional. Under reduced motion or Low-power the new wire still changes colour, but nothing moves.
+  const justConnected = useRecentlyAdded(graph.wires.map(w => w.id))
+  const shaking = useRejectionPulse(feedback) && !calm
 
   const terminalPos = new Map<string, Terminal['position']>()
   for (const c of graph.components) for (const t of c.terminals) terminalPos.set(t.id, t.position)
@@ -127,7 +135,11 @@ export function SchematicCanvas({ graph, report }: Props) {
   const height = Math.max(260, maxY + 110)
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-observatory-navy-lighter bg-observatory-navy">
+    <div
+      className={`overflow-x-auto rounded-2xl border border-observatory-navy-lighter bg-observatory-navy shadow-[inset_0_0_40px_rgba(84,229,211,0.04)] ${shaking ? 'reject-shake' : ''}`}
+      data-testid="schematic-stage"
+      data-rejected={String(shaking)}
+    >
     <svg
       viewBox={`0 0 680 ${height}`}
       role="group"
@@ -135,15 +147,19 @@ export function SchematicCanvas({ graph, report }: Props) {
       className="w-full min-w-[680px]"
     >
       {graph.components.length === 0 && (
-        <text x={340} y={height / 2} textAnchor="middle" fill={PALETTE.muted} fontSize={16}>
-          Add components from the tray to start building.
-        </text>
+        <g>
+          <rect x={90} y={height / 2 - 50} width={500} height={100} rx={18} fill="none" stroke={PALETTE.navyLighter} strokeWidth={2} strokeDasharray="8 8" />
+          <text x={340} y={height / 2 + 5} textAnchor="middle" fill={PALETTE.muted} fontSize={16}>
+            Add components from the tray to start building.
+          </text>
+        </g>
       )}
 
       {graph.wires.map(w => {
         const a = terminalPos.get(w.fromTerminalId)
         const b = terminalPos.get(w.toTerminalId)
         if (!a || !b) return null
+        const fresh = justConnected.has(w.id)
         const label = `${w.id} from ${terminalLabel(graph, w.fromTerminalId)} to ${terminalLabel(graph, w.toTerminalId)}`
         // Route as an elbow so connected wires stay readable.
         const midX = (a.x + b.x) / 2
@@ -162,7 +178,16 @@ export function SchematicCanvas({ graph, report }: Props) {
               }
             }}
           >
-            <path d={d} fill="none" stroke={GOLD} strokeWidth={3} strokeLinejoin="round" />
+            <path
+              d={d}
+              pathLength={1}
+              fill="none"
+              stroke={fresh ? STROKE : GOLD}
+              strokeWidth={fresh ? 5 : 3}
+              strokeLinejoin="round"
+              className={fresh && !calm ? 'wire-snap' : undefined}
+              data-fresh={fresh ? 'true' : undefined}
+            />
           </g>
         )
       })}
@@ -199,7 +224,7 @@ export function SchematicCanvas({ graph, report }: Props) {
               }}
             >
               <rect x={x - 45} y={y - 32} width={90} height={64} fill="transparent" />
-              <Symbol c={c} lit={lit} />
+              <Symbol c={c} lit={lit} pulse={!calm} />
             </g>
             <text x={x} y={y + 50} textAnchor="middle" fill={LABEL} fontSize={13}>
               {name}

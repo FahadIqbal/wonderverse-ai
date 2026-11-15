@@ -1,6 +1,36 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+/* Self-hosted fonts (SIL OFL 1.1, licence texts in public/fonts). Latin subset WOFF2, only the weights the UI uses.
+   font-display: swap shows text at once in the fallback font and swaps when the file arrives. */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/inter-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/inter-latin-600-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/inter-latin-700-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/jetbrains-mono-latin-400-normal.woff2') format('woff2');
+}
 
 :root {
   /* Design tokens */
@@ -16,12 +46,14 @@
   --color-gold-dim: #D9A93A;
   --color-coral: #FF746E;
   
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
   
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 12px;
+  --radius-xl: 18px;
+  --radius-2xl: 24px;
 }
 
 * {
@@ -31,6 +63,8 @@
 body {
   margin: 0;
   font-family: var(--font-sans);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
   background-color: var(--color-navy);
   color: var(--color-text);
   min-height: 100vh;
@@ -65,6 +99,93 @@ body {
   outline-offset: 2px;
 }
 
+
+/* ---- Observatory hero: starfield and glow from CSS gradients only (no images, no canvas). ---- */
+.observatory-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(60% 55% at 50% 0%, rgba(84, 229, 211, 0.16), transparent 70%),
+    radial-gradient(40% 40% at 85% 95%, rgba(255, 211, 107, 0.12), transparent 70%),
+    linear-gradient(180deg, var(--color-navy-light), var(--color-navy));
+}
+.starfield,
+.starfield::after {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-image:
+    radial-gradient(1.5px 1.5px at 8% 14%, var(--color-text), transparent),
+    radial-gradient(1px 1px at 17% 62%, var(--color-muted), transparent),
+    radial-gradient(1.5px 1.5px at 26% 30%, var(--color-text), transparent),
+    radial-gradient(1px 1px at 34% 82%, var(--color-muted), transparent),
+    radial-gradient(1.5px 1.5px at 47% 12%, var(--color-text), transparent),
+    radial-gradient(1px 1px at 58% 70%, var(--color-muted), transparent),
+    radial-gradient(1.5px 1.5px at 66% 24%, var(--color-gold), transparent),
+    radial-gradient(1px 1px at 74% 55%, var(--color-text), transparent),
+    radial-gradient(1.5px 1.5px at 83% 16%, var(--color-text), transparent),
+    radial-gradient(1px 1px at 91% 74%, var(--color-muted), transparent),
+    radial-gradient(1px 1px at 95% 38%, var(--color-aqua), transparent);
+}
+.starfield::after {
+  content: '';
+  z-index: 0;
+  background-image:
+    radial-gradient(1.5px 1.5px at 12% 44%, var(--color-text), transparent),
+    radial-gradient(1px 1px at 22% 8%, var(--color-aqua), transparent),
+    radial-gradient(1.5px 1.5px at 41% 52%, var(--color-text), transparent),
+    radial-gradient(1px 1px at 52% 90%, var(--color-text), transparent),
+    radial-gradient(1.5px 1.5px at 70% 8%, var(--color-text), transparent),
+    radial-gradient(1px 1px at 88% 48%, var(--color-gold), transparent),
+    radial-gradient(1.5px 1.5px at 78% 86%, var(--color-text), transparent);
+  animation: twinkle 5s ease-in-out infinite alternate;
+}
+@keyframes twinkle {
+  from { opacity: 0.25; }
+  to { opacity: 1; }
+}
+
+/* ---- Report-driven feedback motion. Components add these classes only when useMotionPreference().calm is false;
+        the calm rules above also flatten them as a second guard. ---- */
+@keyframes lamp-pulse {
+  0%, 100% { opacity: 0.25; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.18); }
+}
+.lamp-pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: lamp-pulse 2.4s ease-in-out infinite;
+}
+@keyframes wire-snap {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+.wire-snap {
+  stroke-dasharray: 1;
+  animation: wire-snap 0.45s ease-out;
+}
+@keyframes tick-pop {
+  0% { transform: scale(0.4); opacity: 0; }
+  60% { transform: scale(1.35); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.tick-pop {
+  display: inline-block;
+  animation: tick-pop 0.45s ease-out;
+}
+@keyframes reject-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(3px); }
+}
+.reject-shake {
+  animation: reject-shake 0.4s ease-in-out;
+}
 /* Reduced motion. Two triggers, one rule: the OS preference, or data-motion="calm" which
    useMotionPreference sets on <html> when the OS asks for reduced motion or Low-power mode is on. */
 @media (prefers-reduced-motion: reduce) {

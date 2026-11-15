@@ -45,6 +45,23 @@ textPairs.push({ fg: P.navy, fgName: 'navy', bg: P.aqua, bgName: 'aqua button' }
 textPairs.push({ fg: P.navy, fgName: 'navy', bg: P.gold, bgName: 'gold skip link' })
 // Hover state of secondary buttons: navy on aqua is the same pair; aqua on navy-lighter is listed above.
 
+// Visual polish tokens. Badge chips sit on the surface panel, and the portal hero text sits on its brightest glow
+// (aqua at 16% and gold at 12% over the surface, worst case where both glows overlap is covered by the stronger one).
+const badge = {
+  completed: blend(P.aqua, P.navyLight, 0.2),
+  unlocked: blend(P.aqua, P.navyLight, 0.1),
+  inProgress: blend(P.gold, P.navyLight, 0.1),
+}
+textPairs.push({ fg: P.aqua, fgName: 'aqua (completed badge)', bg: badge.completed, bgName: 'aqua/20 over surface' })
+textPairs.push({ fg: P.aqua, fgName: 'aqua (unlocked badge)', bg: badge.unlocked, bgName: 'aqua/10 over surface' })
+textPairs.push({ fg: P.gold, fgName: 'gold (in-progress badge)', bg: badge.inProgress, bgName: 'gold/10 over surface' })
+textPairs.push({ fg: P.muted, fgName: 'muted (locked badge)', bg: P.navy, bgName: 'navy' })
+const heroGlow = blend(P.aqua, P.navyLight, 0.16)
+for (const fgName of ['gold', 'slate-200', 'slate-300', 'muted (docs/04)', 'aqua'])
+  textPairs.push({ fg: fgs[fgName], fgName: `${fgName} (hero)`, bg: heroGlow, bgName: 'hero aqua glow over surface' })
+textPairs.push({ fg: P.navy, fgName: 'navy', bg: P.aqua, bgName: 'primary CTA' })
+textPairs.push({ fg: P.text, fgName: 'text (ghost button hover)', bg: P.navyLighter, bgName: 'navy-lighter hover' })
+
 describe('palette contrast (WCAG 2.x AA)', () => {
   it.each(textPairs.filter(p => !(p.fgName === 'red-200' && p.bgName !== 'red-950/60 over surface')))(
     '$fgName on $bgName is at least 4.5:1',

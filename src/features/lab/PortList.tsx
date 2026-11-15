@@ -1,6 +1,6 @@
 import type { SimulationReport } from '../../domain/circuit'
 import { useLabStore } from './labStore'
-import { secondaryButton } from '../../ui/styles'
+import { secondaryButton, panel, panelHeading } from '../../ui/styles'
 
 /**
  * Keyboard and screen-reader path for the 3D view. Every port and switch in the
@@ -13,8 +13,8 @@ export function PortList({ report }: { report: SimulationReport }) {
   const toggleSwitch = useLabStore(s => s.toggleSwitch)
 
   return (
-    <section aria-labelledby="ports-heading" className="rounded-lg border border-observatory-navy-lighter bg-observatory-navy-light p-4">
-      <h2 id="ports-heading" className="mb-2 text-lg font-semibold text-observatory-gold">
+    <section aria-labelledby="ports-heading" className={panel}>
+      <h2 id="ports-heading" className={panelHeading}>
         Components and ports
       </h2>
       <p className="mb-3 text-xs text-slate-400">

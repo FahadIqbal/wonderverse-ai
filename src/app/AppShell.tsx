@@ -4,7 +4,8 @@ import { MissionView } from '../features/missions/MissionView'
 import { useMissionStore } from '../features/missions/missionStore'
 import { missionIndex } from '../domain/learning'
 import { useApplyMotionAttribute } from '../features/lab/useMotionPreference'
-import { primaryButton, secondaryButton } from '../ui/styles'
+import { ghostButton, secondaryButton } from '../ui/styles'
+import { PortalHero } from './PortalHero'
 
 type Screen = 'portal' | 'map' | 'mission'
 
@@ -35,7 +36,7 @@ export function AppShell() {
       >
         Skip to main content
       </a>
-      <header className="border-b border-observatory-navy-lighter bg-observatory-navy-light/80 px-4 py-3 md:px-8">
+      <header className="border-b border-observatory-navy-lighter bg-observatory-navy-light/80 px-4 py-3 shadow-[0_1px_0_rgba(84,229,211,0.12)] md:px-8">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
           <p className="text-xl font-bold tracking-tight text-observatory-aqua">
             WonderVerse <span className="text-observatory-gold">AI</span>
@@ -50,7 +51,7 @@ export function AppShell() {
                   Back to missions
                 </button>
               )}
-              <button type="button" className={secondaryButton} onClick={() => setScreen('portal')}>
+              <button type="button" className={ghostButton} onClick={() => setScreen('portal')}>
                 Back to start
               </button>
             </nav>
@@ -61,25 +62,7 @@ export function AppShell() {
       </header>
       <main id="main-content" ref={mainRef} tabIndex={-1} className="outline-none mx-auto w-full max-w-7xl flex-1 px-4 py-6 md:px-8">
         {screen === 'portal' ? (
-          <section aria-labelledby="portal-heading" className="mx-auto max-w-3xl py-8 text-center md:py-16">
-            <h1
-              id="portal-heading"
-              tabIndex={-1}
-              className="mb-4 text-4xl font-bold text-observatory-gold outline-none md:text-5xl"
-            >
-              Welcome to the Electricity Lab
-            </h1>
-            <p className="mx-auto mb-3 max-w-xl text-lg text-slate-200">
-              Build a circuit with a battery, a switch and a lamp. The simulator checks your wiring and tells you why a
-              lamp lights up, or why it does not.
-            </p>
-            <p className="mb-8 text-sm text-slate-400">
-              No account or sign-in needed. For ages 10 to 14. Works with a mouse, touch or keyboard.
-            </p>
-            <button type="button" className={`${primaryButton} min-h-[48px] px-8 text-base`} onClick={() => setScreen('map')}>
-              Enter the Lab
-            </button>
-          </section>
+          <PortalHero onEnter={() => setScreen('map')} />
         ) : screen === 'map' ? (
           <MissionMap onOpen={() => setScreen('mission')} />
         ) : (

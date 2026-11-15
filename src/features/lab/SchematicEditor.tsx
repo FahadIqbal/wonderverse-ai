@@ -1,5 +1,7 @@
+import { panel, panelHeading } from '../../ui/styles'
 import { CircuitDiagnostic } from './CircuitDiagnostic'
 import { ComponentTray } from './ComponentTray'
+import { FeedbackBar } from './FeedbackBar'
 import { SchematicCanvas } from './SchematicCanvas'
 import { terminalLabel, useLabStore } from './labStore'
 import { useSimulationReport } from './useSimulationReport'
@@ -32,21 +34,9 @@ export function SchematicEditor() {
         focused, Delete removes it.
       </p>
 
-      <div
-        role="status"
-        aria-live="polite"
-        data-testid="feedback"
-        data-kind={feedback?.kind ?? 'none'}
-        className={`min-h-[2.5rem] rounded-md border px-3 py-2 text-sm ${
-          feedback?.kind === 'error'
-            ? 'border-red-400 bg-red-950/60 text-red-200'
-            : 'border-observatory-navy-lighter bg-observatory-navy-light text-slate-200'
-        }`}
-      >
-        {feedback?.text ?? 'Ready.'}
+      <FeedbackBar feedback={feedback}>
         {pending && <span className="sr-only"> Pending source: {terminalLabel(graph, pending)}.</span>}
-      </div>
-
+      </FeedbackBar>
       <SchematicCanvas graph={graph} report={report} />
 
       {/* minmax(0,1fr): an implicit auto column grows to the widest child's min-content (the diagnostic table) and
@@ -55,9 +45,9 @@ export function SchematicEditor() {
         <CircuitDiagnostic graph={graph} report={report} />
         <section
           aria-labelledby="parts-heading"
-          className="rounded-lg border border-observatory-navy-lighter bg-observatory-navy-light p-4"
+          className={panel}
         >
-          <h2 id="parts-heading" className="mb-2 text-lg font-semibold text-observatory-gold">
+          <h2 id="parts-heading" className={panelHeading}>
             Parts and wires
           </h2>
           {graph.components.length === 0 && graph.wires.length === 0 ? (

@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { panel, secondaryButton } from '../../ui/styles'
 import { CircuitAnnouncer } from './CircuitAnnouncer'
+import { FeedbackBar } from './FeedbackBar'
 import { HistoryControls } from './HistoryControls'
 import { CircuitDiagnostic } from './CircuitDiagnostic'
 import { ComponentTray } from './ComponentTray'
@@ -88,14 +89,7 @@ function Workbench3D({ onContextLost }: { onContextLost: () => void }) {
     .join('. ')
   return (
     <div className="flex flex-col gap-4">
-      <div
-        role="status"
-        aria-live="polite"
-        data-testid="feedback"
-        className="min-h-[2.5rem] rounded-md border border-observatory-navy-lighter bg-observatory-navy-light px-3 py-2 text-sm text-slate-200"
-      >
-        {feedback?.text ?? 'Ready.'}
-      </div>
+      <FeedbackBar feedback={feedback} />
       <figure className="m-0">
         <div
           role="img"

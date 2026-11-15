@@ -1,7 +1,10 @@
 import { useMemo } from 'react'
 import { solveCircuit } from '../../domain/circuit'
 import { useLabStore } from '../lab/labStore'
-import { panel, secondaryButton } from '../../ui/styles'
+import { useRecentlyAdded } from '../lab/useFeedbackMotion'
+import { useMotionPreference } from '../lab/useMotionPreference'
+import { CheckIcon } from '../../ui/icons'
+import { panel, panelHeading, secondaryButton } from '../../ui/styles'
 import { evaluate } from './missionMachine'
 import { useMissionStore } from './missionStore'
 
@@ -13,21 +16,26 @@ export function MissionHUD() {
   const report = useMemo(() => solveCircuit(graph), [graph])
   const evaluation = useMemo(() => evaluate(state, { mission, graph, report }), [state, mission, graph, report])
 
+  const { calm } = useMotionPreference()
+  const justDone = useRecentlyAdded(state.achieved, 3)
   const lastTitle = mission.objectives.find(o => o.id === state.lastAchieved)?.title
   const allHints = state.hintsShown >= mission.hints.length
   const inProgress = state.phase === 'building' || state.phase === 'quiz'
 
   return (
     <section aria-labelledby="hud-heading" className={panel}>
-      <h2 id="hud-heading" className="mb-2 text-lg font-semibold text-observatory-gold">
+      <h2 id="hud-heading" className={panelHeading}>
         {mission.title}: objectives
       </h2>
       <ul className="space-y-2 text-sm text-slate-100">
         {evaluation.objectives.map(o => {
           const done = state.achieved.includes(o.id)
+          const fresh = justDone.has(o.id)
           return (
-            <li key={o.id} data-testid={`objective-${o.id}`} data-done={String(done)}>
-              <span aria-hidden="true">{done ? '✔ ' : '○ '}</span>
+            <li key={o.id} data-testid={`objective-${o.id}`} data-done={String(done)} data-fresh={fresh ? 'true' : undefined} className={`rounded-md px-1 transition-colors duration-500 ${fresh ? 'bg-observatory-aqua/15' : ''}`}>
+              <span aria-hidden="true" className={`mr-1 ${done ? 'text-observatory-aqua' : 'text-observatory-muted'} ${fresh && !calm ? 'tick-pop' : ''}`}>
+                {done ? <CheckIcon className="inline h-4 w-4" /> : '○'}
+              </span>
               <span className="font-semibold">{done ? 'Done:' : 'To do:'}</span> {o.title}
               {!done && <span className="block pl-5 text-slate-400">{o.detail}</span>}
             </li>
