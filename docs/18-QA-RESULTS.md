@@ -121,4 +121,4 @@ Run on macOS after the fix:
 | `npm run e2e:ci` (CI=1, bundled Chromium, 2 workers, 1 retry), run 1 | 74 passed, 19 skipped, 0 failed, 0 flaky |
 | `npm run e2e:ci`, run 2 | 74 passed, 19 skipped, 0 failed, 0 flaky |
 | `npx playwright test` (local Chrome) | 74 passed, 19 skipped, 0 failed |
-GitHub Actions result for the fix commit: see `submission/COMPLIANCE-CHECKLIST.md` row 20 (recorded only after a run is observed).
+GitHub Actions on the fix commit 1ecffb0: run 43729342001 **success** (observed through the public API). Playwright job annotation: 74 passed, 19 skipped (59.2 s); web and tutor jobs success.
