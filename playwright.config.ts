@@ -37,7 +37,9 @@ export default defineConfig({
   timeout: 60_000,
   expect: { timeout: 10_000 },
   globalSetup: './e2e/global-setup.ts',
-  reporter: CI ? [['list'], ['html', { open: 'never' }]] : [['list']],
+  // On GitHub Actions the 'github' reporter turns each failure into a check annotation, which is readable without
+  // downloading the artifact.
+  reporter: CI ? [['list'], ['html', { open: 'never' }], ...(process.env.GITHUB_ACTIONS ? [['github'] as ['github']] : [])] : [['list']],
   webServer: REMOTE ? undefined : {
     // Serves the production build, so E2E runs against what ships.
     command: `npm run build && npx vite preview --port ${PORT} --strictPort`,
