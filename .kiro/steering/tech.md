@@ -1,0 +1,2 @@
+# Tech steering
+Use React/TypeScript strict + Vite, R3F/drei, Tailwind, Zustand, Zod, Vitest, Testing Library, Playwright, fast-check. The solver is a pure domain module; renderer consumes reports only. No backend for guest experience; optional FastAPI gateway for LLM, with offline fallback. No secrets in browser or Git. Avoid dependencies without clear gain. Test state transitions and solver invariants. Record any justified deviations in docs/12-DECISION-LOG.md.

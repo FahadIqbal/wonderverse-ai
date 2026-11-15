@@ -1,0 +1,60 @@
+import type { CircuitGraph, SimulationReport } from '../../domain/circuit'
+
+interface Props {
+  graph: CircuitGraph
+  report: SimulationReport
+}
+
+const fmt = (n: number, digits = 2) => n.toFixed(digits)
+
+export function CircuitDiagnostic({ graph, report }: Props) {
+  return (
+    <section
+      aria-labelledby="diagnostic-heading"
+      className="rounded-lg border border-observatory-navy-lighter bg-observatory-navy-light p-4"
+    >
+      <h2 id="diagnostic-heading" className="mb-2 text-lg font-semibold text-observatory-gold">
+        Circuit diagnostic
+      </h2>
+      <dl className="mb-3 grid grid-cols-[auto,1fr] gap-x-3 gap-y-1 text-sm">
+        <dt className="text-slate-400">Status</dt>
+        <dd data-testid="diag-status" className="font-mono text-observatory-aqua">{report.status}</dd>
+        <dt className="text-slate-400">Reason</dt>
+        <dd data-testid="diag-reason" className="text-slate-100">{report.reason}</dd>
+        <dt className="text-slate-400">Battery</dt>
+        <dd className="font-mono text-slate-100">{fmt(report.batteryVoltage)} V</dd>
+        <dt className="text-slate-400">Total current</dt>
+        <dd className="font-mono text-slate-100">{fmt(report.totalCurrent * 1000, 1)} mA</dd>
+      </dl>
+      {graph.components.length > 0 && (
+        <table className="w-full text-left text-sm">
+          <caption className="sr-only">Voltage and current for each component, from the simulation report</caption>
+          <thead>
+            <tr className="text-slate-400">
+              <th scope="col" className="py-1">Component</th>
+              <th scope="col">Voltage</th>
+              <th scope="col">Current</th>
+              <th scope="col">State</th>
+            </tr>
+          </thead>
+          <tbody>
+            {graph.components.map(c => {
+              const r = report.componentResults.find(x => x.componentId === c.id)
+              return (
+                <tr key={c.id} data-testid={`diag-row-${c.id}`} className="border-t border-observatory-navy-lighter">
+                  <th scope="row" className="py-1 font-normal text-slate-100">{c.label ?? c.id}</th>
+                  <td className="font-mono">{fmt(r?.voltage ?? 0)} V</td>
+                  <td className="font-mono">{fmt((r?.current ?? 0) * 1000, 1)} mA</td>
+                  <td>{r?.isEnergized ? 'Energized' : 'Idle'}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      )}
+      <p className="mt-3 text-xs text-slate-400">
+        Simplified DC model: ideal battery, ohmic lamps and resistors. Not a full physics simulation.
+      </p>
+    </section>
+  )
+}

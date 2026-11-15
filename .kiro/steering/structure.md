@@ -1,0 +1,2 @@
+# Structure steering
+Suggested app layout: `src/app`, `src/features/lab`, `src/features/missions`, `src/features/tutor`, `src/domain/circuit`, `src/domain/learning`, `src/ui`, `src/assets`, `src/test`, `e2e`, `services/tutor` (optional), `public`. Components do not import internal solver implementation details—use domain contracts. Feature folders own their tests. `.kiro/` is tracked. Naming: PascalCase components, camelCase functions, kebab-case folders. Keep code modular; do not create one giant page component.

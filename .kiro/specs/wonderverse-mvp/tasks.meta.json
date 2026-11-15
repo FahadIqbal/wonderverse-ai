@@ -1,0 +1,160 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "T05 Implement keyboard-accessible schematic editor that shares canonical graph state.": [
+      {
+        "executionId": "7beabf88-f2a8-40a0-b3d7-518182ce27a1",
+        "chatSessionId": "sess_6ea3615a-131b-4b20-b030-1eadf21234cf",
+        "timestamp": 1794718083997
+      },
+      {
+        "executionId": "7beabf88-f2a8-40a0-b3d7-518182ce27a1",
+        "chatSessionId": "sess_6ea3615a-131b-4b20-b030-1eadf21234cf",
+        "timestamp": 1794718091169
+      }
+    ],
+    "T06 Implement mission 1 setup, predicates, authored quiz and completion guard.": [
+      {
+        "executionId": "7beabf88-f2a8-40a0-b3d7-518182ce27a1",
+        "chatSessionId": "sess_6ea3615a-131b-4b20-b030-1eadf21234cf",
+        "timestamp": 1794718084094
+      },
+      {
+        "executionId": "7beabf88-f2a8-40a0-b3d7-518182ce27a1",
+        "chatSessionId": "sess_6ea3615a-131b-4b20-b030-1eadf21234cf",
+        "timestamp": 1794718344725
+      }
+    ],
+    "T07 Build premium responsive shell and 3D workbench with component tray and ports.": [
+      {
+        "executionId": "7beabf88-f2a8-40a0-b3d7-518182ce27a1",
+        "chatSessionId": "sess_6ea3615a-131b-4b20-b030-1eadf21234cf",
+        "timestamp": 1794718084122
+      },
+      {
+        "executionId": "7beabf88-f2a8-40a0-b3d7-518182ce27a1",
+        "chatSessionId": "sess_6ea3615a-131b-4b20-b030-1eadf21234cf",
+        "timestamp": 1794718641740
+      },
+      {
+        "executionId": "7beabf88-f2a8-40a0-b3d7-518182ce27a1",
+        "chatSessionId": "sess_6ea3615a-131b-4b20-b030-1eadf21234cf",
+        "timestamp": 1794718891695
+      }
+    ],
+    "T08 Connect 3D interactions to graph reducer; make glow/switch reflect solver output.": [
+      {
+        "executionId": "7beabf88-f2a8-40a0-b3d7-518182ce27a1",
+        "chatSessionId": "sess_6ea3615a-131b-4b20-b030-1eadf21234cf",
+        "timestamp": 1794718084156
+      },
+      {
+        "executionId": "7beabf88-f2a8-40a0-b3d7-518182ce27a1",
+        "chatSessionId": "sess_6ea3615a-131b-4b20-b030-1eadf21234cf",
+        "timestamp": 1794718896276
+      },
+      {
+        "executionId": "7beabf88-f2a8-40a0-b3d7-518182ce27a1",
+        "chatSessionId": "sess_6ea3615a-131b-4b20-b030-1eadf21234cf",
+        "timestamp": 1794724365527
+      }
+    ],
+    "T09 Implement missions 2 and 3 and local persistence + reset/undo.": [
+      {
+        "executionId": "7beabf88-f2a8-40a0-b3d7-518182ce27a1",
+        "chatSessionId": "sess_6ea3615a-131b-4b20-b030-1eadf21234cf",
+        "timestamp": 1794718084186
+      },
+      {
+        "executionId": "7beabf88-f2a8-40a0-b3d7-518182ce27a1",
+        "chatSessionId": "sess_6ea3615a-131b-4b20-b030-1eadf21234cf",
+        "timestamp": 1794724369004
+      },
+      {
+        "executionId": "7beabf88-f2a8-40a0-b3d7-518182ce27a1",
+        "chatSessionId": "sess_6ea3615a-131b-4b20-b030-1eadf21234cf",
+        "timestamp": 1794725260805
+      }
+    ],
+    "T10 Implement grounded tutor local fallback, then optional secured model gateway.": [
+      {
+        "executionId": "7beabf88-f2a8-40a0-b3d7-518182ce27a1",
+        "chatSessionId": "sess_6ea3615a-131b-4b20-b030-1eadf21234cf",
+        "timestamp": 1794718084223
+      },
+      {
+        "executionId": "7beabf88-f2a8-40a0-b3d7-518182ce27a1",
+        "chatSessionId": "sess_6ea3615a-131b-4b20-b030-1eadf21234cf",
+        "timestamp": 1794725265510
+      },
+      {
+        "executionId": "7beabf88-f2a8-40a0-b3d7-518182ce27a1",
+        "chatSessionId": "sess_6ea3615a-131b-4b20-b030-1eadf21234cf",
+        "timestamp": 1794725805922
+      }
+    ],
+    "T11 Add feedback states, accessibility, reduced motion, low-power/fallback handling.": [
+      {
+        "executionId": "7beabf88-f2a8-40a0-b3d7-518182ce27a1",
+        "chatSessionId": "sess_6ea3615a-131b-4b20-b030-1eadf21234cf",
+        "timestamp": 1794718084252
+      },
+      {
+        "executionId": "7beabf88-f2a8-40a0-b3d7-518182ce27a1",
+        "chatSessionId": "sess_6ea3615a-131b-4b20-b030-1eadf21234cf",
+        "timestamp": 1794725810249
+      },
+      {
+        "executionId": "7beabf88-f2a8-40a0-b3d7-518182ce27a1",
+        "chatSessionId": "sess_6ea3615a-131b-4b20-b030-1eadf21234cf",
+        "timestamp": 1794726653050
+      }
+    ],
+    "T12 Add Playwright E2E flows, CI, mobile/tablet manual QA; fix issues.": [
+      {
+        "executionId": "7beabf88-f2a8-40a0-b3d7-518182ce27a1",
+        "chatSessionId": "sess_6ea3615a-131b-4b20-b030-1eadf21234cf",
+        "timestamp": 1794718084296
+      },
+      {
+        "executionId": "7beabf88-f2a8-40a0-b3d7-518182ce27a1",
+        "chatSessionId": "sess_6ea3615a-131b-4b20-b030-1eadf21234cf",
+        "timestamp": 1794726657329
+      },
+      {
+        "executionId": "7beabf88-f2a8-40a0-b3d7-518182ce27a1",
+        "chatSessionId": "sess_6ea3615a-131b-4b20-b030-1eadf21234cf",
+        "timestamp": 1794727509111
+      }
+    ],
+    "T13 Deploy public working demo and test anonymously.": [
+      {
+        "executionId": "7beabf88-f2a8-40a0-b3d7-518182ce27a1",
+        "chatSessionId": "sess_6ea3615a-131b-4b20-b030-1eadf21234cf",
+        "timestamp": 1794718084323
+      },
+      {
+        "executionId": "ce4e039a-ff2f-4db2-aa72-dc0c2488877a",
+        "chatSessionId": "sess_6ea3615a-131b-4b20-b030-1eadf21234cf",
+        "timestamp": 1794732357176
+      },
+      {
+        "executionId": "ce4e039a-ff2f-4db2-aa72-dc0c2488877a",
+        "chatSessionId": "sess_6ea3615a-131b-4b20-b030-1eadf21234cf",
+        "timestamp": 1794732525780
+      },
+      {
+        "executionId": "6eda0092-d3c5-41ee-9e98-5ab2d50f3490",
+        "chatSessionId": "sess_6ea3615a-131b-4b20-b030-1eadf21234cf",
+        "timestamp": 1794732816634
+      }
+    ],
+    "T14 Record actual Kiro use, capture YouTube under 3 minutes, publish GitHub/LICENSE, complete Devpost.": [
+      {
+        "executionId": "7beabf88-f2a8-40a0-b3d7-518182ce27a1",
+        "chatSessionId": "sess_6ea3615a-131b-4b20-b030-1eadf21234cf",
+        "timestamp": 1794718084353
+      }
+    ]
+  }
+}

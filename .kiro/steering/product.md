@@ -1,0 +1,2 @@
+# WonderVerse product steering
+WonderVerse AI is a Frankenstein-category hackathon project: integrate 3D experiment manipulation, physically grounded deterministic simulation, mission state machine, and a contextual tutor. Primary users are 10–14-year-old learners and judges. Prioritize a gorgeous but truthful Electricity Lab. Ship complete three-mission flow over speculative features. Always refer to docs/00, 01, 05, and 13.

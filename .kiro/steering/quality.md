@@ -1,0 +1,2 @@
+# Quality steering
+Definition of done: working behavior, typecheck, unit tests, accessibility path, reliable fallback, no console errors. Every user action must have correct disabled/loading/error feedback. No claim of true physics outside supported simplified DC assumptions. Render circuit state only from computed report. Do not use fabricated testimonials, user studies or benchmarks. Validate with clean browser context.
