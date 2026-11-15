@@ -17,11 +17,11 @@ Build a circuit in 3D, watch a deterministic solver decide whether the lamp ligh
 - YouTube demo (under 3 minutes): `[TODO: YouTube URL]`
 
 ## Screenshots to upload
-Files are in `submission/screenshots/` (captured from the live URL in a clean browser context on 2026-11-15, desktop 1280 px wide):
+Files are in `submission/screenshots/` (captured from the live URL in a clean browser context on 2026-11-15, desktop 1280 px wide; 03, 04 and 05 were retaken after the layout change on 2026-11-15, 01 and 02 were not retaken because the layout change does not affect them):
 1. `01-portal.png` - portal
 2. `02-mission-map.png` - mission map
-3. `03-mission1-lamp-lit-schematic.png` - mission 1, lamp lit, schematic view and diagnostic table
-4. `04-mission1-3d-view.png` - mission 1, lamp lit, 3D bench and diagnostic table
+3. `03-mission1-lamp-lit-schematic.png` - mission 1, lamp lit, schematic view, objectives beside it (first screen, 1280x800)
+4. `04-mission1-3d-view.png` - mission 1, lamp lit, 3D bench, objectives beside it (first screen, 1280x800; the diagnostic table is below the fold)
 5. `05-completion-dialog.png` - "Mission complete: Complete the Loop"
 
 `[TODO: pick the order and choose a thumbnail; add a mission 2 screenshot if you want one]`

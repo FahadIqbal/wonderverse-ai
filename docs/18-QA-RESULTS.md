@@ -65,3 +65,9 @@ The two flaky tests were the first two desktop tests of the run (axe scan, and n
 | Phone lab view toggle | not measured | about 181; schematic below it |
 **Bundle:** `LabScene` chunk 933.17 kB (250.43 kB gzip) before and after; main chunk 292.67 kB to 292.76 kB. The drei deep-import experiment gave no change and was reverted (docs/12).
 Not tested in this pass: real devices, Firefox, WebKit, screen readers (docs/17).
+
+### After the push (aef5e0f)
+- `git push origin main` succeeded (cd0cdfb..aef5e0f). GitHub Actions run 43721450720 on aef5e0f: `completed`, `success` (read through the public API).
+- The live asset hash changed from `index-DJgmfpVo.js` to `index-B_fBlYc_.js` on the third poll (about 30 s after the push). `/robots.txt` 200, `/favicon.svg` 200 (image/svg+xml), an unknown path returns 404 with the custom `404.html`, and `og:title` is in the served HTML.
+- `E2E_BASE_URL=https://wonderverse-ai.vercel.app npm run e2e:ci`: 72 tests, **67 passed, 5 skipped, 0 failed, 0 flaky** (45.9 s). This includes the new first-viewport test running against production.
+- Screenshots 03, 04 and 05 in `submission/screenshots/` were retaken from the live site (1280x800, clean context, no console errors) after this deploy.
