@@ -37,3 +37,11 @@ Test-side fixes (not app bugs): erase dialog role is `alertdialog`; the diagnost
 - The 44px check scans portal, map and mission schematic/3D at the initial state, not every dialog.
 - Orbit-by-touch and pinch in the real canvas were not exercised; only the list and schematic tap paths were.
 - `baseline-browser-mapping` and `caniuse-lite` data are stale warnings from the build tools (not app errors).
+
+## T13 live deployment (2026-11-15)
+- **URL:** https://wonderverse-ai.vercel.app (repo https://github.com/FahadIqbal/wonderverse-ai). Anonymous `curl` returns 200 with the "WonderVerse AI - Observatory Lab" title; unknown paths return 404.
+- **Deployment protection:** the branch alias `wonderverse-ai-git-main-fahad-iqbal88-yahoocoms-projects.vercel.app` redirects anonymous visitors to Vercel SSO. Use the production URL above for sharing. If it ever starts redirecting, set Project Settings > Deployment Protection > Vercel Authentication off for Production.
+- **First CI run failed:** `postcss.config.js` requires `autoprefixer`, which was not in `package.json` (it only resolved on the author's machine). Reproduced in a fresh clone, fixed in 3608a86. CI is green on that commit (web, e2e, tutor jobs).
+- **E2E against the live URL** (`E2E_BASE_URL=https://wonderverse-ai.vercel.app npm run e2e:ci`, clean contexts, desktop/tablet/mobile): 64 passed, 5 skipped (by design), 0 failed. Console guard passed on production.
+- **Local after the fix:** tsc, e2e typecheck, lint clean; 263 unit tests pass; build passes; local E2E 64 passed, 5 skipped.
+- **Gaps:** hashed `/assets/*` were served with `max-age=0`; `vercel.json` now sets `immutable` one-year caching (takes effect on the next deploy). The 3D chunk (about 933 kB, 250 kB gzip) is lazy-loaded and was not trimmed. The favicon is still the Vite default. No real-device, Firefox or WebKit check.

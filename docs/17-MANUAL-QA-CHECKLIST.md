@@ -20,6 +20,6 @@ Status key: **NOT DONE** means nobody has performed it. Playwright device emulat
 | 15 | System reduced-motion setting on a real OS | Emulated `prefers-reduced-motion` is covered in jsdom and Chrome (T11). | NOT DONE |
 | 16 | Network throttling (Slow 3G) cold load | Check the lazy 3D chunk shows the loading message and then the scene. | NOT DONE |
 | 17 | Tutor model outage with a real gateway | Needs a deployed gateway and a real provider (none is implemented). | NOT DONE |
-| 18 | Deployed URL smoke test in a clean profile | Part of T13. | NOT DONE |
+| 18 | Deployed URL smoke test in a clean profile | Part of T13. Automated clean-context Playwright run against the live URL passed (docs/18); a human check in a real private window is still open. | PARTIAL |
 | 19 | External keyboard on tablet (Tab, Enter, Esc, Ctrl+Z) | Check shortcuts and focus order. | NOT DONE |
 | 20 | Landscape phone layout (844x390) | Playwright covers portrait phone only. | NOT DONE |

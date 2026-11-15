@@ -137,3 +137,11 @@ Before altering a major design decision: document original assumption, alternati
 - **Tests run (actual).** See docs/18: tsc, e2e typecheck, lint clean; 263 unit tests pass; build passes; E2E 64 passed and 5 skipped (by design) with Chrome and with bundled Chromium; pytest 19 passed.
 - **Not verified.** The GitHub Actions workflow itself has not run. No real device, no screen reader, no real GPU, no Firefox or WebKit (docs/17 lists them as NOT DONE).
 - **Next:** T13 deploy and anonymous smoke test.
+
+## T13 deployment decisions (2026-11-15)
+- **Hosting:** Vercel static hosting of `dist` (`vercel.json`), no backend; tutor stays on the offline Local guide unless `VITE_TUTOR_URL` is set. Production URL https://wonderverse-ai.vercel.app.
+- **License:** MIT (`LICENSE`).
+- **autoprefixer** added as a devDependency (required by `postcss.config.js`; its absence broke CI and fresh installs).
+- **Meta:** added description and theme-color to `index.html`. No analytics or tracking.
+- **Caching:** `/assets/*` gets `Cache-Control: public, max-age=31536000, immutable` (filenames are content-hashed).
+- **Not done, deliberately:** manual chunking or drei import trimming of the lazy 3D chunk (no measured win attempted; it loads only for the 3D view).

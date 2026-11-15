@@ -7,7 +7,7 @@ Kiroween 2026 entry, **Frankenstein** category. It combines four parts into one 
 - a three-mission state machine (progress is saved in the browser only),
 - a tutor that explains the computed state, with an offline local guide and an optional gateway.
 
-Live demo: not deployed yet. This line is updated once a URL has been verified.
+Live demo: https://wonderverse-ai.vercel.app (hosted on Vercel, no login). Source: https://github.com/FahadIqbal/wonderverse-ai
 
 ## Status
 
