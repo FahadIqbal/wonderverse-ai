@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import fc from 'fast-check'
 import { createEmptyGraph, circuitReducer, solveCircuit, CircuitFixtures } from '../../../domain/circuit'
 import { createComponent } from '../labStore'
-import { DEFAULT_CAMERA_DISTANCE, ORBIT_LIMITS, fitCameraDistance, BENCH_CENTER, PORT_HEIGHT, WIRE_ARC_LEVELS, WORLD_SCALE, lampGlow, placeComponent, placeGraph, terminalWorldPosition, toWorld, wireArcHeight, wireArcMid, wireEnergized } from './geometry'
+import { DEFAULT_CAMERA_DISTANCE, ORBIT_LIMITS, fitCameraDistance, BENCH_CENTER, PORT_HEIGHT, WIRE_ARC_LEVELS, WORLD_SCALE, lampGlow, placeComponent, placeGraph, terminalWorldPosition, toWorld, wireArcHeight, wireArcMid, wireEnergized, LAMP_PULSE_AMPLITUDE, lampPulseActive, lampPulseFactor, litLampCount, sceneFrameloop } from './geometry'
 import type { CircuitGraph, ComponentType } from '../../../domain/circuit'
 
 function graphWith(types: ComponentType[]): CircuitGraph {
@@ -163,6 +163,38 @@ describe('fitCameraDistance', () => {
       fc.property(fc.oneof(fc.double({ min: -5, max: 10, noNaN: false }), fc.constant(Infinity)), a => {
         const d = fitCameraDistance(a, 45)
         return d >= DEFAULT_CAMERA_DISTANCE - 1e-9 && d <= ORBIT_LIMITS.maxDistance
+      }),
+    )
+  })
+})
+
+describe('lamp pulse decision (pure)', () => {
+  function closedLoop() {
+    let g = createEmptyGraph()
+    for (const t of ['battery', 'lamp'] as const) g = circuitReducer(g, { type: 'ADD_COMPONENT', component: createComponent(g, t) })
+    g = circuitReducer(g, { type: 'ADD_WIRE', wire: { id: 'w1', fromTerminalId: 'battery-1-pos', toTerminalId: 'lamp-1-a' } })
+    g = circuitReducer(g, { type: 'ADD_WIRE', wire: { id: 'w2', fromTerminalId: 'lamp-1-b', toTerminalId: 'battery-1-neg' } })
+    return g
+  }
+  it('counts lit lamps from the report only', () => {
+    const lit = closedLoop()
+    expect(litLampCount(lit, solveCircuit(lit))).toBe(1)
+    const dark = graphWith(['battery', 'lamp'])
+    expect(litLampCount(dark, solveCircuit(dark))).toBe(0)
+  })
+  it('renders continuously only with a lit lamp and motion allowed (property)', () => {
+    fc.assert(
+      fc.property(fc.boolean(), fc.integer({ min: 0, max: 5 }), (calm, n) => {
+        expect(sceneFrameloop(calm, n)).toBe(!calm && n > 0 ? 'always' : 'demand')
+        expect(lampPulseActive(calm, n)).toBe(!calm && n > 0)
+      }),
+    )
+  })
+  it('keeps the pulse factor within a small band around 1 (property)', () => {
+    fc.assert(
+      fc.property(fc.double({ min: 0, max: 1e5, noNaN: true }), t => {
+        const k = lampPulseFactor(t)
+        expect(Math.abs(k - 1)).toBeLessThanOrEqual(LAMP_PULSE_AMPLITUDE + 1e-12)
       }),
     )
   })

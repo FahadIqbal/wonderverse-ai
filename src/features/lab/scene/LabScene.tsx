@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, invalidate, useFrame, useThree } from '@react-three/fiber'
-import { CanvasTexture, type Mesh, type PerspectiveCamera } from 'three'
+import { CanvasTexture, type Mesh, type MeshBasicMaterial, type MeshStandardMaterial, type PerspectiveCamera } from 'three'
 import { Line, OrbitControls } from '@react-three/drei'
 import type { CircuitComponent, CircuitGraph, SimulationReport } from '../../../domain/circuit'
 import type { MotionPreference } from '../useMotionPreference'
@@ -12,6 +12,10 @@ import {
   ORBIT_LIMITS,
   PORT_HEIGHT,
   lampGlow,
+  lampPulseActive,
+  lampPulseFactor,
+  litLampCount,
+  sceneFrameloop,
   placeGraph,
   terminalWorldPosition,
   wireArcMid,
@@ -77,8 +81,23 @@ function BatteryModel({ span }: { span: number }) {
  * Glass bulb with a filament inside. Glow comes only from `lit` and `intensity`, which the caller reads from the
  * simulation report (lampGlow). Nothing here decides whether the lamp is on.
  */
-function LampModel({ intensity, lit }: { intensity: number; lit: boolean }) {
+function LampModel({ intensity, lit, pulse }: { intensity: number; lit: boolean; pulse: boolean }) {
   const glow = lit ? 0.6 + 2 * intensity : 0
+  const filament = useRef<MeshStandardMaterial>(null)
+  const halo = useRef<MeshBasicMaterial>(null)
+  const haloOpacity = 0.12 + 0.2 * intensity
+  // Report-driven pulse: only runs while `pulse` is true (lit lamp and motion allowed). Resets to the static glow after.
+  useFrame(({ clock }) => {
+    if (!pulse) return
+    const k = lampPulseFactor(clock.elapsedTime)
+    if (filament.current) filament.current.emissiveIntensity = glow * k
+    if (halo.current) halo.current.opacity = Math.min(1, haloOpacity * k)
+  })
+  useEffect(() => {
+    if (pulse) return
+    if (filament.current) filament.current.emissiveIntensity = glow
+    if (halo.current) halo.current.opacity = haloOpacity
+  }, [pulse, glow, haloOpacity])
   return (
     <group>
       <mesh position={[0, 0.12, 0]}>
@@ -101,6 +120,7 @@ function LampModel({ intensity, lit }: { intensity: number; lit: boolean }) {
       <mesh position={[0, 0.66, 0]}>
         <torusGeometry args={[0.07, 0.016, 8, 20, Math.PI]} />
         <meshStandardMaterial
+          ref={filament}
           color={lit ? '#fff3c4' : '#6b7894'}
           emissive={COLORS.gold}
           emissiveIntensity={glow}
@@ -111,7 +131,7 @@ function LampModel({ intensity, lit }: { intensity: number; lit: boolean }) {
       {lit && (
         <mesh position={[0, 0.66, 0]}>
           <sphereGeometry args={[0.24, 20, 16]} />
-          <meshBasicMaterial color={COLORS.gold} transparent opacity={0.12 + 0.2 * intensity} depthWrite={false} />
+          <meshBasicMaterial ref={halo} color={COLORS.gold} transparent opacity={haloOpacity} depthWrite={false} />
         </mesh>
       )}
       <mesh position={[0, 0.68, 0]}>
@@ -198,11 +218,13 @@ function Model({
   component,
   placement,
   report,
+  pulse,
   onToggleSwitch,
 }: {
   component: CircuitComponent
   placement: ComponentPlacement
   report: SimulationReport
+  pulse: boolean
   onToggleSwitch?: (componentId: string) => void
 }) {
   switch (component.type) {
@@ -210,7 +232,7 @@ function Model({
       return <BatteryModel span={placement.span} />
     case 'lamp': {
       const glow = lampGlow(report, component.id)
-      return <LampModel lit={glow.lit} intensity={glow.intensity} />
+      return <LampModel lit={glow.lit} intensity={glow.intensity} pulse={pulse && glow.lit} />
     }
     case 'resistor':
       return <ResistorModel span={placement.span} />
@@ -338,6 +360,7 @@ function ContextLossWatcher({ onContextLost }: { onContextLost?: () => void }) {
 function Scene({ graph, report, pendingTerminalId, motion, onSelectTerminal, onToggleSwitch, onContextLost }: LabSceneProps) {
   const placements = placeGraph(graph)
   const animate = motion.animateFlow
+  const pulse = lampPulseActive(motion.calm, litLampCount(graph, report))
   const blob = useBlobTexture()
   return (
     <>
@@ -365,7 +388,7 @@ function Scene({ graph, report, pendingTerminalId, motion, onSelectTerminal, onT
         return (
           <group key={p.componentId} name={p.componentId} position={p.position} rotation={[0, p.rotationY, 0]}>
             {blob && <BlobShadow texture={blob} span={p.span} />}
-            <Model component={component} placement={p} report={report} onToggleSwitch={onToggleSwitch} />
+            <Model component={component} placement={p} report={report} pulse={pulse} onToggleSwitch={onToggleSwitch} />
           </group>
         )
       })}
@@ -431,7 +454,7 @@ function FitCamera() {
 export default function LabScene(props: LabSceneProps) {
   return (
     <Canvas
-      frameloop={props.motion.frameloop}
+      frameloop={sceneFrameloop(props.motion.calm, litLampCount(props.graph, props.report))}
       dpr={props.motion.dpr}
       camera={{ position: [0, 6.5, 8], fov: 45 }}
       gl={{ antialias: props.motion.antialias, powerPreference: props.motion.lowPower ? 'low-power' : 'default' }}

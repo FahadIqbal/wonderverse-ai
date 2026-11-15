@@ -17,11 +17,11 @@ Build a circuit in 3D, watch a deterministic solver decide whether the lamp ligh
 - YouTube demo (under 3 minutes): `[TODO: YouTube URL]`
 
 ## Screenshots to upload
-Files are in `submission/screenshots/` (captured with Playwright from a local production build of the visual-polish commit, clean browser context; desktop 1440x900 and mobile 390x844). They replace the earlier five:
+Files are in `submission/screenshots/` (captured with Playwright from the live site on 2026-11-16, clean browser contexts; desktop 1440x900 and mobile 390x844):
 1. `desktop-01-portal.png`, `mobile-01-portal.png` - portal
 2. `desktop-02-map.png`, `mobile-02-map.png` - mission map, nothing completed
 3. `desktop-03-schematic-lit.png`, `mobile-03-schematic-lit.png` - mission 1 schematic, lamp lit (the red line is a rejected short-circuit attempt, shown on purpose)
-4. `desktop-04-3d.png`, `mobile-04-3d.png` - mission 1, 3D bench, lamp lit (software GL render)
+4. `desktop-04-3d.png`, `mobile-04-3d.png` - mission 1, 3D bench, lamp lit (software GL render, so the real-GPU look is unchecked)
 5. `desktop-05-completion.png`, `mobile-05-completion.png` - "Mission complete: Complete the Loop"
 6. `desktop-06-map-progress.png`, `mobile-06-map-progress.png` - map after mission 1
 7. `desktop-reduced-03-schematic-lit.png`, `mobile-reduced-03-schematic-lit.png` - same as 3 with reduced motion on
@@ -39,7 +39,7 @@ Hands-on science is hard to set up and hard to personalize. We wanted a place wh
 - **Privacy and recovery.** Progress is stored in localStorage only. "Erase my progress" clears it. If WebGL is unavailable or a 3D scene fails, the schematic is used and mission 1 can still be finished.
 
 ## How we built it
-- **Stack** (from `package.json`): React 18, TypeScript 5.6 (strict), Vite 6, three.js with @react-three/fiber and @react-three/drei, Tailwind CSS 3, Zustand 5, Zod 3. Tests: Vitest 2, Testing Library, fast-check, axe-core, Playwright. Lint: ESLint 9. Optional gateway: FastAPI with pytest. Hosting: Vercel (static). CI: GitHub Actions.
+- **Stack** (from `package.json`): React 18, TypeScript 5.6 (strict), Vite 6, three.js with @react-three/fiber and @react-three/drei, Tailwind CSS 3, Zustand 5, Zod 3. Tests: Vitest 2, Testing Library, fast-check, axe-core, Playwright. Lint: ESLint 9. Optional gateway: FastAPI with pytest. Hosting: Vercel (static). CI: GitHub Actions. Fonts (Inter, JetBrains Mono) are self-hosted under the OFL.
 - **Architecture.** `CircuitGraph` reducer, then `solveCircuit`, then an immutable report, then the mission evaluator, the 3D scene, the schematic and the tutor. Renderers and tutor only read the report. The solver has no rendering imports.
 - **Kiro.** The repo tracks `.kiro/steering/` (product, tech, structure, quality) and `.kiro/specs/wonderverse-mvp/` (requirements in EARS form R1 to R9, design, and a task list T01 to T14 with `tasks.meta.json` execution history). Work followed the spec task by task, and `docs/12-DECISION-LOG.md` records decisions per task. The full, evidence-based account, including what cannot be verified, is in `docs/19-KIRO-USAGE-RECORD.md`. No Kiro hooks or MCP servers are configured in this repo, and we did not use any.
 
@@ -51,13 +51,13 @@ Hands-on science is hard to set up and hard to personalize. We wanted a place wh
 - **Staying grounded.** The tutor can only use fields from the report, so hints cannot invent readings.
 
 ## Accomplishments (test counts from `docs/18-QA-RESULTS.md`)
-Scope: one macOS machine, Node 26.13.1, Playwright 1.65.1, Chrome and bundled Chromium, software WebGL (SwiftShader), Playwright **emulation** for tablet and phone sizes. The doc's date and the repository commits are both 2026-11-15.
-- `npm run test:run`: **263 unit and property tests passed**, in 27 files.
-- `npm run e2e`: **64 passed, 5 skipped, 0 failed** (23 tests across desktop, tablet and phone projects). The skips are by design.
-- The same E2E suite against the live URL (`E2E_BASE_URL=https://wonderverse-ai.vercel.app`): 64 passed, 5 skipped, 0 failed (docs/18, T13 section).
+Scope: one macOS machine, Node 26.13.1, Playwright 1.65.1, Chrome and bundled Chromium, software WebGL (SwiftShader), Playwright **emulation** for tablet and phone sizes. Dates are 2026-11-15 and 2026-11-16.
+- `npm run test:run`: **284 unit and property tests passed**, in 29 files.
+- `npm run e2e:ci` (bundled Chromium): **74 passed, 19 skipped, 0 failed** (93 = 31 tests x 3 projects). The skips are by design (tests that apply to one device class only).
+- The same E2E suite against the live URL (`E2E_BASE_URL=https://wonderverse-ai.vercel.app`) on the polish build: 74 passed, 19 skipped, 0 failed (docs/18).
 - `pytest` for the tutor gateway: 19 passed.
 - `tsc -b` and `npm run lint`: clean in that run.
-- GitHub Actions CI (web, e2e, tutor jobs) is reported green on commit 3608a86 in docs/18. `[TODO: confirm on the Actions tab]`
+- GitHub Actions CI (web, e2e, tutor jobs): success on 1e7544b (run 43734538913, read through the public API). `[TODO: confirm on the Actions tab for the final commit]`
 - axe-core checks on portal, map, erase dialog and mission screens, run in real Chrome, with a console-error guard on every E2E test.
 
 ## What we learned
@@ -68,7 +68,7 @@ Scope: one macOS machine, Node 26.13.1, Playwright 1.65.1, Chrome and bundled Ch
 ## What's next
 - Add a real model provider behind the existing gateway, keeping the Local guide as fallback.
 - Test with real phones, tablets and screen readers (the checklist is `docs/17-MANUAL-QA-CHECKLIST.md`).
-- Trim the lazy 3D chunk (about 933 kB, 250 kB gzip) and replace the default favicon.
+- Trim the lazy 3D chunk (about 936 kB, 251 kB gzip).
 - More circuit content (for example series versus parallel comparisons) and a free-play mode.
 
 ## Honest limitations

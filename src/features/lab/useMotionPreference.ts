@@ -12,7 +12,7 @@ export interface MotionPreference {
   calm: boolean
   /** Current-flow dots along energized wires. */
   animateFlow: boolean
-  /** R3F render loop. Always on demand: nothing renders continuously unless a flow dot asks for a frame. */
+  /** R3F base render loop. On demand: the scene switches to continuous only while a lit lamp pulses (see sceneFrameloop). */
   frameloop: 'demand'
   /** Pixel-ratio range for the canvas. Low-power renders at 1x. */
   dpr: [number, number]

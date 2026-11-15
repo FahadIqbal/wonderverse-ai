@@ -11,7 +11,7 @@ Live demo: https://wonderverse-ai.vercel.app (hosted on Vercel, no login). Sourc
 
 ## Status
 
-Tasks T01 to T12 are done (scaffold, circuit schemas, solver, UI, 3D lab, three missions, persistence, tutor, accessibility pass, Playwright E2E and CI). T13 (deploy and anonymous test) is done. A final pass moved the lab to the top of the mission page (`docs/12`, `docs/18`). A closing pass (2026-11-15) added emulation checks (forced colors, reduced motion, zoom/reflow viewports, keyboard-only mission 1), opt-in Firefox and WebKit engine runs, a licence audit and an E2E warm-up (`docs/18`). T14 (Kiro record, video, Devpost) is partly prepared; the video, YouTube upload and Devpost submission are not done. Test results, with exact counts and what was not tested, are in `docs/18-QA-RESULTS.md`. Decisions are in `docs/12-DECISION-LOG.md`.
+Tasks T01 to T12 are done (scaffold, circuit schemas, solver, UI, 3D lab, three missions, persistence, tutor, accessibility pass, Playwright E2E and CI). T13 (deploy and anonymous test) is done. A visual polish pass (self-hosted fonts, observatory portal, mission cards, feedback motion, richer 3D materials) and a small report-driven lamp pulse in the 3D view (off under reduced motion and Low-power) followed (`docs/12`, `docs/18`). A final pass moved the lab to the top of the mission page (`docs/12`, `docs/18`). A closing pass (2026-11-15) added emulation checks (forced colors, reduced motion, zoom/reflow viewports, keyboard-only mission 1), opt-in Firefox and WebKit engine runs, a licence audit and an E2E warm-up (`docs/18`). T14 (Kiro record, video, Devpost) is partly prepared; the video, YouTube upload and Devpost submission are not done. Test results, with exact counts and what was not tested, are in `docs/18-QA-RESULTS.md`. Decisions are in `docs/12-DECISION-LOG.md`.
 
 ## Run it
 
@@ -55,7 +55,7 @@ The app works with no key and no backend. The tutor then uses the built-in **Loc
 - `submission/DEVPOST-SUBMISSION-FINAL.md`: Devpost text (has a `[TODO: YouTube URL]` placeholder).
 - `submission/DEMO-SCRIPT-FINAL.md`: timed demo script and pre-recording checklist. The video is not recorded yet.
 - `submission/COMPLIANCE-CHECKLIST.md`: per-item status, with the steps only a human can do.
-- `submission/screenshots/`: screenshots of the polished UI (desktop 1440x900 and mobile 390x844, plus reduced-motion variants of the schematic), captured from a local production build, not the live site.
+- `submission/screenshots/`: screenshots of the polished UI (desktop 1440x900 and mobile 390x844, plus reduced-motion variants of the schematic), captured from the live site (https://wonderverse-ai.vercel.app) in clean browser contexts.
 - `docs/19-KIRO-USAGE-RECORD.md`: what the repo shows about Kiro use, and what it cannot show.
 - `submission/ASSET-AND-LICENSE-REGISTER.md`: assets and licenses from repo evidence, with unverified items marked.
 

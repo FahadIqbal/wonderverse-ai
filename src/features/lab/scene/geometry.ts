@@ -102,6 +102,35 @@ export function lampGlow(report: SimulationReport, componentId: string): LampGlo
   return { lit: true, intensity: 0.3 + 0.7 * ratio }
 }
 
+/** Pulse period in seconds and relative amplitude of the lit-lamp glow. Small on purpose: a hint of life, not a flash. */
+export const LAMP_PULSE_PERIOD_S = 2.4
+export const LAMP_PULSE_AMPLITUDE = 0.1
+
+/**
+ * Glow multiplier for a lit lamp at time `t` seconds. Always within 1 +/- LAMP_PULSE_AMPLITUDE and never below 0.
+ */
+export function lampPulseFactor(t: number): number {
+  return 1 + LAMP_PULSE_AMPLITUDE * Math.sin((2 * Math.PI * t) / LAMP_PULSE_PERIOD_S)
+}
+
+/**
+ * The lamp pulse runs only while at least one lamp is lit (from the report) and motion is allowed
+ * (no reduced-motion preference, no Low-power mode).
+ */
+export function lampPulseActive(calm: boolean, litLampCount: number): boolean {
+  return !calm && litLampCount > 0
+}
+
+/** Continuous rendering only while the pulse needs it. Otherwise the canvas renders on demand. */
+export function sceneFrameloop(calm: boolean, litLampCount: number): 'always' | 'demand' {
+  return lampPulseActive(calm, litLampCount) ? 'always' : 'demand'
+}
+
+/** Number of lamps the report says are lit. */
+export function litLampCount(graph: CircuitGraph, report: SimulationReport): number {
+  return graph.components.filter(c => c.type === 'lamp' && lampGlow(report, c.id).lit).length
+}
+
 /** Orbit limits keep the camera above the bench and the bench in view. */
 export const ORBIT_LIMITS = {
   minDistance: 5,
