@@ -142,3 +142,20 @@ Scope: live-URL screenshot recapture, 3D lamp pulse, consistency audit of README
 - **Screenshots.** All 14 files in `submission/screenshots/` were recaptured from https://wonderverse-ai.vercel.app (the polish build a077dee, before the pulse) with a temporary Playwright spec (not committed): clean contexts, Chrome with SwiftShader, desktop 1440x900 and mobile 390x844 (device scale 2), reduced motion on and off. Console guard (errors, warnings, page errors, minus the three allowlisted software-GL and three.js notices): no unexpected output in any of the four contexts. Sizes 97 to 398 KB. Files 02 and 06 on desktop came out byte-identical to the previous capture.
 - **3D lamp pulse.** `sceneFrameloop(calm, litLampCount)` in `src/features/lab/scene/geometry.ts` returns `'always'` only when the report has at least one lit lamp and neither reduced motion nor Low-power is on; otherwise `'demand'`. `lampPulseFactor(t)` scales the filament emissive intensity and halo opacity by 1 +/- 10% over a 2.4 s period. Nothing in the pulse decides whether a lamp is lit. Not measured: frame rate or battery cost, and the look on a real GPU. The pulse is visible only in a live motion-allowed browser; no E2E asserts it.
 - **Consistency fixes.** Counts (284 unit, 74 passed and 19 skipped E2E), screenshot provenance, CI status (run 43734538913 on 1e7544b: success), the font and icon statements in the asset register and checklist, the demo script's portal and map wording, and the stale favicon and 933 kB remarks in the Devpost draft. All URLs in README, docs and submission files returned 200 (`curl`).
+## Bundle size pass (2026-11-16, macOS)
+| Command | Result |
+| --- | --- |
+| `npx tsc -b`, `npm run typecheck:e2e`, `npm run lint` | clean |
+| `npm run test:run` | 29 files, 284 tests passed (same count; existing assertions now `await findBy...` for the lazy mission screen) |
+| `npm run build` | built; see table |
+| `caffeinate -i npm run e2e:ci` equivalent (`CI=1 npx playwright test`, bundled Chromium, 2 workers, 1 retry) | 72 passed, 19 skipped, 0 failed, 2 flaky (tablet a11y-and-touch, failed on attempt 1 with a reported 15.5 min duration, i.e. the laptop paused mid-run; both passed on retry and again in an isolated rerun, 4 passed) |
+
+| Chunk | Before (raw / gzip kB) | After (raw / gzip kB) |
+| --- | --- | --- |
+| index (main) JS | 300.50 / 90.54 | 257.22 / 78.03 |
+| MissionView JS (new, lazy) | n/a | 44.18 / 14.63 |
+| webgl JS (new, shared) | n/a | 0.55 / 0.37 |
+| LabScene JS (lazy) | 936.28 / 251.25 | 936.32 / 251.27 |
+| CSS | 25.55 / 5.83 | 25.55 / 5.83 |
+
+First-load JS on the portal (Playwright, response bodies, uncompressed): 293.5 -> 251.2 kB. Local `vite preview` only; no live-site measurement and no throttled-network timing.

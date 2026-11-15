@@ -1,12 +1,20 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { MissionMap } from '../features/missions/MissionMap'
-import { MissionView } from '../features/missions/MissionView'
 import { useMissionStore } from '../features/missions/missionStore'
 import { missionIndex } from '../domain/learning'
 import { useApplyMotionAttribute } from '../features/lab/useMotionPreference'
 import { ghostButton, secondaryButton } from '../ui/styles'
 import { PortalHero } from './PortalHero'
 
+// The mission screen (lab, solver, tutor, quiz) is not needed for first paint, so it is its own chunk.
+const loadMissionView = () => import('../features/missions/MissionView').then(m => ({ default: m.MissionView }))
+const MissionView = lazy(loadMissionView)
+/** After the map renders, fetch the mission chunk and then the 3D chunk when the browser is idle, so entering the lab is instant. */
+function prefetchMissionChunks() {
+  const run = () => void loadMissionView().then(() => import('../features/lab/scene/LabScene')).catch(() => undefined)
+  if ('requestIdleCallback' in window) window.requestIdleCallback(run, { timeout: 4000 })
+  else setTimeout(run, 1500)
+}
 type Screen = 'portal' | 'map' | 'mission'
 
 /**
@@ -27,7 +35,9 @@ export function AppShell() {
     lastScreen.current = screen
     mainRef.current?.querySelector<HTMLElement>('h1')?.focus()
   }, [screen])
-
+  useEffect(() => {
+    if (screen === 'map') prefetchMissionChunks()
+  }, [screen])
   return (
     <div className="flex min-h-screen flex-col bg-observatory-navy text-observatory-text">
       <a
@@ -73,7 +83,15 @@ export function AppShell() {
             >
               Electricity Lab
             </h1>
-            <MissionView key={missionId} onBackToMap={() => setScreen('map')} />
+            <Suspense
+              fallback={
+                <p role="status" className="text-slate-300">
+                  Loading the lab…
+                </p>
+              }
+            >
+              <MissionView key={missionId} onBackToMap={() => setScreen('map')} />
+            </Suspense>
           </>
         )}
       </main>

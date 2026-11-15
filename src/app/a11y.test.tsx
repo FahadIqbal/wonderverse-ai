@@ -31,7 +31,7 @@ async function violations(root: Element = document.body): Promise<string[]> {
 async function toMissionBuilding(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole('button', { name: 'Enter the Lab' }))
   await user.click(screen.getByRole('button', { name: /Start Mission 1/ }))
-  await user.click(screen.getByRole('button', { name: 'Start mission' }))
+  await user.click(await screen.findByRole('button', { name: 'Start mission' }))
 }
 
 describe('automated accessibility audit (axe-core)', () => {
@@ -58,7 +58,7 @@ describe('automated accessibility audit (axe-core)', () => {
     await user.click(screen.getByRole('button', { name: 'Enter the Lab' }))
     await user.click(screen.getByRole('button', { name: /Start Mission 1/ }))
     expect(await violations()).toEqual([])
-    await user.click(screen.getByRole('button', { name: 'Start mission' }))
+    await user.click(await screen.findByRole('button', { name: 'Start mission' }))
     await user.click(screen.getByRole('button', { name: 'Add Battery' }))
     await user.click(screen.getByRole('button', { name: 'Add Switch' }))
     expect(await violations()).toEqual([])

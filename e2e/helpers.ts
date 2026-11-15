@@ -19,7 +19,9 @@ export async function enterLab(page: Page) {
 /** Opens a mission from the map and presses Start mission when the briefing shows. */
 export async function openMission(page: Page, n: 1 | 2 | 3) {
   await page.getByRole('button', { name: new RegExp(`^(Start|Continue|Review) Mission ${n}$`) }).click()
+  // The mission screen is a lazy chunk: wait for either the briefing or the workbench instead of probing once.
   const start = page.getByRole('button', { name: 'Start mission' })
+  await expect(start.or(page.getByRole('region', { name: 'Lab workbench' }))).toBeVisible()
   if (await start.isVisible()) await start.click()
   await expect(page.getByRole('region', { name: 'Lab workbench' })).toBeVisible()
 }

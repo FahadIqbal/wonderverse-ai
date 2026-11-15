@@ -59,7 +59,7 @@ describe('mission map', () => {
     await user.click(screen.getByRole('button', { name: 'Enter the Lab' }))
     expect(card('mission-2')).toHaveAttribute('data-status', 'unlocked')
     await user.click(screen.getByRole('button', { name: 'Review Mission 1' }))
-    expect(screen.getByTestId('mission-complete')).toBeInTheDocument()
+    expect(await screen.findByTestId('mission-complete')).toBeInTheDocument()
     // Reviewing a finished mission opens its recap; it does not run the completion again.
     expect(screen.getByRole('dialog', { name: /Mission complete: Complete the Loop/ })).toBeInTheDocument()
     expect(useMissionStore.getState().state.completions).toBe(1)
@@ -73,9 +73,9 @@ describe('Mission 2 end to end through the UI', () => {
     render(<AppShell />)
     await user.click(screen.getByRole('button', { name: 'Enter the Lab' }))
     await user.click(screen.getByRole('button', { name: 'Start Mission 2' }))
-    expect(screen.getByRole('heading', { level: 2, name: 'Mission 2: Fix the Fault' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 2, name: 'Mission 2: Fix the Fault' })).toBeInTheDocument()
     expect(screen.getByText('The museum lamp went out. Diagnose the circuit.')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Start mission' }))
+    await user.click(await screen.findByRole('button', { name: 'Start mission' }))
     // The prefilled circuit is dark and the diagnostic says why; nothing can be won by a click alone.
     expect(screen.getByTestId('objective-fault-repaired')).toHaveAttribute('data-done', 'false')
     expect(useLabStore.getState().graph.wires).toHaveLength(2)
@@ -120,7 +120,7 @@ describe('Mission 2 end to end through the UI', () => {
     render(<AppShell />)
     await user.click(screen.getByRole('button', { name: 'Enter the Lab' }))
     await user.click(screen.getByRole('button', { name: 'Start Mission 2' }))
-    await user.click(screen.getByRole('button', { name: 'Start mission' }))
+    await user.click(await screen.findByRole('button', { name: 'Start mission' }))
     await connect(user, 'Lamp 1 right', 'Battery 1 negative')
     await user.click(screen.getByRole('radio', { name: 'There was no complete return path back to the battery.' }))
     await user.click(screen.getByRole('button', { name: 'Check answer' }))
@@ -137,7 +137,7 @@ describe('Mission 3 through the UI', () => {
     render(<AppShell />)
     await user.click(screen.getByRole('button', { name: 'Enter the Lab' }))
     await user.click(screen.getByRole('button', { name: 'Start Mission 3' }))
-    await user.click(screen.getByRole('button', { name: 'Start mission' }))
+    await user.click(await screen.findByRole('button', { name: 'Start mission' }))
     const pairs: [string, string][] = [
       ['Battery 1 positive', 'Switch 1 left'],
       ['Battery 1 positive', 'Switch 2 left'],
@@ -165,7 +165,7 @@ describe('undo, redo and reset controls', () => {
     render(<AppShell />)
     await user.click(screen.getByRole('button', { name: 'Enter the Lab' }))
     await user.click(screen.getByRole('button', { name: 'Start Mission 1' }))
-    await user.click(screen.getByRole('button', { name: 'Start mission' }))
+    await user.click(await screen.findByRole('button', { name: 'Start mission' }))
   }
   it('has correct disabled states and documents the shortcuts', async () => {
     const user = userEvent.setup()
