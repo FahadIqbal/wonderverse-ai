@@ -11,7 +11,7 @@ Live demo: https://wonderverse-ai.vercel.app (hosted on Vercel, no login). Sourc
 
 ## Status
 
-Tasks T01 to T12 are done (scaffold, circuit schemas, solver, UI, 3D lab, three missions, persistence, tutor, accessibility pass, Playwright E2E and CI). T13 (deploy and anonymous test) is done. T14 (Kiro record, video, Devpost) is partly prepared; the video, YouTube upload and Devpost submission are not done. Test results, with exact counts and what was not tested, are in `docs/18-QA-RESULTS.md`. Decisions are in `docs/12-DECISION-LOG.md`.
+Tasks T01 to T12 are done (scaffold, circuit schemas, solver, UI, 3D lab, three missions, persistence, tutor, accessibility pass, Playwright E2E and CI). T13 (deploy and anonymous test) is done. A final pass moved the lab to the top of the mission page (`docs/12`, `docs/18`). T14 (Kiro record, video, Devpost) is partly prepared; the video, YouTube upload and Devpost submission are not done. Test results, with exact counts and what was not tested, are in `docs/18-QA-RESULTS.md`. Decisions are in `docs/12-DECISION-LOG.md`.
 
 ## Run it
 
@@ -56,7 +56,7 @@ The app works with no key and no backend. The tutor then uses the built-in **Loc
 - `submission/COMPLIANCE-CHECKLIST.md`: per-item status, with the steps only a human can do.
 - `submission/screenshots/`: five screenshots of the live site.
 - `docs/19-KIRO-USAGE-RECORD.md`: what the repo shows about Kiro use, and what it cannot show.
-- `submission/ASSET-AND-LICENSE-REGISTER.md` is still incomplete.
+- `submission/ASSET-AND-LICENSE-REGISTER.md`: assets and licenses from repo evidence, with unverified items marked.
 
 ## Event-window disclosure
 

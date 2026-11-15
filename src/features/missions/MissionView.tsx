@@ -47,9 +47,11 @@ export function MissionView({ onBackToMap }: { onBackToMap?: () => void } = {}) 
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid gap-4 md:grid-cols-2">
-        <MissionHUD />
-        <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        {/* The lab comes first in the DOM and on screen: it is the main activity. */}
+        <LabWorkbench />
+        <aside aria-label="Mission panel" className="flex flex-col gap-4">
+          <MissionHUD />
           <QuizPanel />
           <section aria-label="Finish mission" className={panel}>
             {complete ? (
@@ -84,9 +86,8 @@ export function MissionView({ onBackToMap }: { onBackToMap?: () => void } = {}) 
             )}
           </section>
           <TutorPanel key={mission.id} />
-        </div>
+        </aside>
       </div>
-      <LabWorkbench />
       {complete && !dismissed && (
         <CompletionDialog
           mission={mission}

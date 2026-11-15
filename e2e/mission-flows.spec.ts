@@ -188,3 +188,25 @@ test.describe('missions 2 and 3', () => {
     await expect(page.getByTestId('objective-branch-off')).toHaveAttribute('data-done', 'false')
   })
 })
+test.describe('mission layout (lab visible without scrolling)', () => {
+  test('the lab is in the first viewport on opening a mission, and the 3D stage is fully visible on desktop', async ({ page }) => {
+    await openApp(page)
+    await enterLab(page)
+    await openMission(page, 1)
+    const vp = page.viewportSize()!
+    const lab = await page.getByRole('region', { name: 'Lab workbench' }).boundingBox()
+    expect(lab!.y).toBeLessThan(vp.height / 2)
+    // The phone defaults to the schematic; check its first canvas row is on screen too.
+    const first = await page.getByRole('group', { name: 'Lab view' }).boundingBox()
+    expect(first!.y + first!.height).toBeLessThan(vp.height)
+    if (vp.width >= 1024) {
+      const stage = await page.getByTestId('scene-stage').boundingBox()
+      expect(stage!.y).toBeGreaterThanOrEqual(0)
+      expect(stage!.y + stage!.height).toBeLessThanOrEqual(vp.height)
+      // Objectives sit beside the lab, not below it.
+      const hud = await page.getByRole('heading', { name: /objectives/ }).boundingBox()
+      expect(hud!.y).toBeLessThan(vp.height)
+      expect(hud!.x).toBeGreaterThan(lab!.x + lab!.width)
+    }
+  })
+})

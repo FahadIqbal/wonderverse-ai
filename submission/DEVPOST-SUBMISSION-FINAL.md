@@ -50,7 +50,7 @@ Hands-on science is hard to set up and hard to personalize. We wanted a place wh
 - **Staying grounded.** The tutor can only use fields from the report, so hints cannot invent readings.
 
 ## Accomplishments (test counts from `docs/18-QA-RESULTS.md`)
-Scope: one macOS machine, Node 26.13.1, Playwright 1.65.1, Chrome and bundled Chromium, software WebGL (SwiftShader), Playwright **emulation** for tablet and phone sizes. The doc's header date reads 2026-11-19 while the repository commits are dated 2026-11-15. `[TODO: the dates in docs/18 and the T09 to T12 headings in docs/12 disagree with the commit dates; fix them before submitting]`
+Scope: one macOS machine, Node 26.13.1, Playwright 1.65.1, Chrome and bundled Chromium, software WebGL (SwiftShader), Playwright **emulation** for tablet and phone sizes. The doc's date and the repository commits are both 2026-11-15.
 - `npm run test:run`: **263 unit and property tests passed**, in 27 files.
 - `npm run e2e`: **64 passed, 5 skipped, 0 failed** (23 tests across desktop, tablet and phone projects). The skips are by design.
 - The same E2E suite against the live URL (`E2E_BASE_URL=https://wonderverse-ai.vercel.app`): 64 passed, 5 skipped, 0 failed (docs/18, T13 section).

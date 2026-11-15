@@ -1,5 +1,5 @@
 # QA results (T12)
-Date: 2026-11-19 (run on one macOS machine, Node v26.13.1, Playwright 1.65.1).
+Date: 2026-11-15 (run on one macOS machine, Node v26.13.1, Playwright 1.65.1).
 
 ## Scope and honesty
 - Every browser run used **Playwright emulation** on **software GL (SwiftShader)**. No real phone, tablet, GPU or screen reader was used. See docs/17 for what is still not done.
@@ -20,7 +20,7 @@ Date: 2026-11-19 (run on one macOS machine, Node v26.13.1, Playwright 1.65.1).
 
 The 5 skips are by design: the Tab-order test runs on desktop only (2 skips), touch-only tests do not run on desktop (2 skips), and the 3D port-list test is skipped on the phone project, which defaults to the schematic (1 skip). Skipped means not run.
 
-CI workflow `.github/workflows/ci.yml` was written but **has not run on GitHub**; its steps were run locally one by one.
+CI workflow `.github/workflows/ci.yml`: see the T13 and final-pass sections for the real GitHub runs. (When this section was first written it had not run on GitHub.)
 
 ## What the E2E suite covers
 R1 guest start and skip link, unlock gating, R8 erase (keys cleared, re-locks mission 2), corrupt, future-version and blocked localStorage, mission 1 by keyboard in the schematic (open loop dark, open switch dark, lit from report, quiz, completion dialog, reload persistence, completion not counted twice), 3D port list path, missions 2 and 3 end to end, series wiring rejected in mission 3, R5 tutor with no key (Local guide), R7 WebGL disabled (fallback and mission 1 completable), axe-core in real Chrome on portal, map, erase dialog, mission (3D and schematic), no horizontal scroll, 44px target check, touch tap flow. A console guard fails any test on `console.error`, uncaught page errors, or non-allowlisted warnings (allowlist in `e2e/fixtures.ts`, each entry with a reason; its failing path was checked once with a deliberate `console.error`).
@@ -44,4 +44,24 @@ Test-side fixes (not app bugs): erase dialog role is `alertdialog`; the diagnost
 - **First CI run failed:** `postcss.config.js` requires `autoprefixer`, which was not in `package.json` (it only resolved on the author's machine). Reproduced in a fresh clone, fixed in 3608a86. CI is green on that commit (web, e2e, tutor jobs).
 - **E2E against the live URL** (`E2E_BASE_URL=https://wonderverse-ai.vercel.app npm run e2e:ci`, clean contexts, desktop/tablet/mobile): 64 passed, 5 skipped (by design), 0 failed. Console guard passed on production.
 - **Local after the fix:** tsc, e2e typecheck, lint clean; 263 unit tests pass; build passes; local E2E 64 passed, 5 skipped.
-- **Gaps:** hashed `/assets/*` were served with `max-age=0`; `vercel.json` now sets `immutable` one-year caching (takes effect on the next deploy). The 3D chunk (about 933 kB, 250 kB gzip) is lazy-loaded and was not trimmed. The favicon is still the Vite default. No real-device, Firefox or WebKit check.
+- **Gaps:** hashed `/assets/*` were served with `max-age=0`; `vercel.json` now sets `immutable` one-year caching (takes effect on the next deploy). The 3D chunk (about 933 kB, 250 kB gzip) is lazy-loaded and was not trimmed. The favicon file was named `vite.svg` (content was already the project mark; renamed in the final pass). No real-device, Firefox or WebKit check.
+
+## Final gap-closing pass (2026-11-15, same machine, Node v26.13.1, Playwright 1.65.1)
+Scope: mission layout rework, favicon/meta/robots/404, asset register, date corrections, bundle measurement. Local, Chromium on software GL, emulated tablet and phone only.
+| Command | Result |
+|---|---|
+| `npx tsc -b` | clean |
+| `npm run typecheck:e2e` | clean |
+| `npm run lint` | clean |
+| `npm run test:run` | 263 passed, 27 files (no unit test needed changing; none added) |
+| `npm run build` | passes; same chunk-size warning |
+| `npm run e2e:ci` (bundled Chromium) | 72 tests: **65 passed, 2 flaky (failed first attempt, passed on retry), 5 skipped, 0 failed**. 72 = 24 tests x 3 projects; one new test (`mission layout`) added. Took 10.5 min. |
+The two flaky tests were the first two desktop tests of the run (axe scan, and no-horizontal-scroll). Each hit the 60 s test timeout on the first attempt (one in `openMission` waiting for the lab region, one in `page.evaluate`) and passed in 2 to 3 s on retry. I re-ran that spec file alone on desktop and both passed on the first attempt (17 s). I did not find the cause; a cold start of the first 3D scene on software GL is a guess, not a finding. If it recurs, treat it as an open flake.
+**Layout measurements** (Chrome, 1280x800 desktop; 820x1180 tablet; 390x844 phone), y of the top of the 3D stage (phone uses the schematic):
+| | Before | After |
+|---|---|---|
+| Desktop 3D stage | 971 to 1491 (below the 800 px fold) | 347 to 787 (inside the fold) |
+| Tablet 3D stage | 1123 | 347 |
+| Phone lab view toggle | not measured | about 181; schematic below it |
+**Bundle:** `LabScene` chunk 933.17 kB (250.43 kB gzip) before and after; main chunk 292.67 kB to 292.76 kB. The drei deep-import experiment gave no change and was reverted (docs/12).
+Not tested in this pass: real devices, Firefox, WebKit, screen readers (docs/17).

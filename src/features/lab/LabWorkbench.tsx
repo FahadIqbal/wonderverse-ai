@@ -88,7 +88,6 @@ function Workbench3D({ onContextLost }: { onContextLost: () => void }) {
     .join('. ')
   return (
     <div className="flex flex-col gap-4">
-      <ComponentTray />
       <div
         role="status"
         aria-live="polite"
@@ -102,7 +101,7 @@ function Workbench3D({ onContextLost }: { onContextLost: () => void }) {
           role="img"
           aria-label={`3D workbench with ${graph.components.length} parts and ${graph.wires.length} wires. ${lampSummary}`}
           data-testid="scene-stage"
-          className="h-[360px] w-full overflow-hidden rounded-2xl border border-observatory-navy-lighter bg-observatory-navy sm:h-[440px] lg:h-[520px]"
+          className="h-[360px] w-full overflow-hidden rounded-2xl border border-observatory-navy-lighter bg-observatory-navy sm:h-[440px] lg:h-[440px]"
         >
           <Suspense
             fallback={
@@ -127,6 +126,7 @@ function Workbench3D({ onContextLost }: { onContextLost: () => void }) {
           Click a switch to open or close it. Escape cancels. The same actions are in the list below.
         </figcaption>
       </figure>
+      <ComponentTray />
       <label className="flex min-h-[44px] items-center gap-3 text-sm text-slate-200">
         <input type="checkbox" checked={lowPower} onChange={e => setLowPower(e.target.checked)} className="h-5 w-5" />
         Low-power mode (turns off animation and lowers the 3D detail)

@@ -1,6 +1,8 @@
 # Manual QA checklist (real devices and assistive tech)
 Status key: **NOT DONE** means nobody has performed it. Playwright device emulation (docs/18) is not a substitute for any item here. Change a status only after you actually ran the check, and add the date, device and tester.
 
+> Layout note (final pass): the mission page now puts the lab first and the objectives beside it (desktop) or below it (tablet, phone). Items 1 to 5, 13 and 20 should be run against this layout. Nothing in this file was performed in that pass; all statuses are unchanged.
+
 | # | Check | How | Status |
 |---|---|---|---|
 | 1 | Real phone (iOS Safari, current): portal to mission 1 complete by touch | Open the deployed URL in a private tab. Wire the loop in the schematic, toggle the switch, answer the quiz, finish. | NOT DONE |
