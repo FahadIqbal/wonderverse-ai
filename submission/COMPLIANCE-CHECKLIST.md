@@ -1,25 +1,38 @@
-# Kiroween 2026 compliance checklist (verify current rules)
+# Kiroween 2026 compliance checklist (status as of 2026-11-15)
 
-## Timeline (official website as of 2026-11-14)
-- Submission window: Oct 30 – Dec 4, 2026; **deadline Dec 4, 2:00pm Pacific time**.
-- Credit request deadline: Dec 1, 2026, noon Pacific time; review credit form instructions.
-- Build must be new and created during eligible period; use any reused tools/assets legally and disclose pre-existing work.
+Legend: **DONE** = checked, with evidence. **HUMAN TODO** = only the author can do it; exact step given. Nothing is marked DONE without evidence.
 
-## Gate before submission
-- [ ] Registered and individually eligible under official regional/age rules.
-- [ ] Code actually built with Kiro during valid period; document meaningful Kiro use.
-- [ ] Official category **Frankenstein** selected in Devpost.
-- [ ] Public **GitHub** repository (not GitLab/Bitbucket) with LICENSE, full code, assets, reproducible install.
-- [ ] Root `.kiro/` folder tracked; not ignored. Example check: `git ls-files .kiro`.
-- [ ] Live URL works without payment; provide judge logins if needed.
-- [ ] Project works consistently as shown, no misleading demo claims.
-- [ ] Public YouTube functioning demo **under 3 minutes**.
-- [ ] English descriptions and Kiro-use writeup.
-- [ ] IP, music, font, visual assets and third-party terms checked.
-- [ ] Judge can access app for evaluation period.
-- [ ] Optional bonus entries claimed only if actually eligible; blog/social hashtags and dates verified.
+## What was and was not checked against the official rules
+`https://kiroween.devpost.com/rules` was fetched once on 2026-11-15, but only the first part came back (the page was cut off after the start of the eligibility section; later fetches returned HTTP 403). What was read: registration period Oct 13 to Dec 4, 2026 (2:00 pm PT); **submission period Oct 30, 2026 (9:00 am PT) to Dec 4, 2026 (2:00 pm PT)**; no extensions or late entries; judging Dec 16, 2026 to Jan 29, 2027; sponsor Amazon Web Services; administrator Devpost; eligibility: individuals who are at least the age of majority where they live, teams of up to 3, or organizations; listed excluded places include Quebec, Argentina, Australia, Brazil, Italy, Philippines, Russia, UAE and OFAC-sanctioned countries (the list is cut off in the part that was read).
+**Not read:** the submission requirements, the video rules, the category definitions, the judging text and the IP terms. The original items below (Frankenstein, `.kiro` tracked, public GitHub, YouTube under 3 minutes, credit request deadline Dec 1 noon PT) come from the earlier draft of this file and are **not confirmed by this fetch**. The author must read the full rules before submitting. This file does not claim the project complies with the rules.
 
-## Judging weights
+## Items
+
+| # | Item | Status | Evidence or exact step |
+|---|---|---|---|
+| 1 | Eligibility (age of majority, residence not excluded, team size, representative) | **HUMAN TODO** | Read section 3 of the rules at https://kiroween.devpost.com/rules in a browser, then confirm your own age and country of residence against it. Confirm your Devpost account details match your Kiro credit request. |
+| 2 | Built during the submission period, no undisclosed pre-event code | **HUMAN TODO** | Git history: 4 commits, all dated 2026-11-15 (`git log --format='%h %ad %s' --date=iso`), inside the Oct 30 to Dec 4 window. `README.md` and `AGENTS.md` state the fresh-build rule. Only you can confirm that no earlier WonderVerse code was reused; if any was, disclose it in Devpost. Also fix the date mismatch in `docs/12-DECISION-LOG.md` and `docs/18` (see `docs/19-KIRO-USAGE-RECORD.md`, section 5). |
+| 3 | Kiro was actually used; usage documented | **DONE (partial)** | `docs/19-KIRO-USAGE-RECORD.md` lists the evidence in the repo: specs, four steering files, `tasks.meta.json` execution history for T05 to T14. It states what cannot be verified. **HUMAN TODO:** fill section 7 of that file with anything else you did in Kiro. |
+| 4 | Category **Frankenstein** selected in Devpost | **HUMAN TODO** | In the Devpost submission form, choose Frankenstein. Check on the Devpost page that the category exists and fits (the rules text for categories was not read). |
+| 5 | Public GitHub repository | **DONE (anonymous check)** | `curl` without login returned HTTP 200 for https://github.com/FahadIqbal/wonderverse-ai on 2026-11-15. Re-check in a private window after the push (local `main` is ahead of `origin/main` by the unpushed commit(s)). |
+| 6 | LICENSE present and visible | **DONE** | MIT, `LICENSE` in the repo root. HTTP 200 for https://github.com/FahadIqbal/wonderverse-ai/blob/main/LICENSE. In a private window, check GitHub shows "MIT license" in the repo sidebar. |
+| 7 | `.kiro/` tracked, not ignored | **DONE** | `git ls-files .kiro` lists `design.md`, `requirements.md`, `tasks.md`, `tasks.meta.json`, `product.md`, `quality.md`, `structure.md`, `tech.md`. `.gitignore` has no `.kiro` rule. https://github.com/FahadIqbal/wonderverse-ai/tree/main/.kiro returned 200. |
+| 8 | Reproducible install | **DONE (local), HUMAN TODO (fresh machine)** | README has `npm install`, `npm run build`. A fresh clone was used once to reproduce the `autoprefixer` bug (docs/18). Step: clone into a new folder, run `npm ci && npm run build && npm run test:run`, note the result. |
+| 9 | Live URL works with no login and no payment | **DONE (curl), HUMAN TODO (browser)** | `curl` returned 200 and the title "WonderVerse AI - Observatory Lab" for https://wonderverse-ai.vercel.app on 2026-11-15; Playwright captured the portal, map and mission 1 from it in a clean context with no console errors (screenshots in `submission/screenshots/`). Step: open it in a private window on a different network or device and finish mission 1. |
+| 10 | Deployment protection does not block judges | **HUMAN TODO** | docs/18 says the production URL is anonymous but the branch alias redirects to Vercel SSO. Step: Vercel project, Settings, Deployment Protection, confirm Vercel Authentication is off for Production. Share only the production URL. Re-check after each deploy during judging (Dec 16 to Jan 29). |
+| 11 | Latest commit deployed | **HUMAN TODO** | The Vercel build for the newest `main` commit has not been checked here. Step: push, wait for Vercel to build, and confirm the live site still works. |
+| 12 | Demo video under 3 minutes, public YouTube | **HUMAN TODO** | Script: `submission/DEMO-SCRIPT-FINAL.md` (2:45 plan). Step: record at 1080p, upload to YouTube with **Public** visibility, confirm the length is under 3:00, watch it fully, paste the URL into Devpost and replace `[TODO: YouTube URL]` in `submission/DEVPOST-SUBMISSION-FINAL.md`. |
+| 13 | Screenshots for Devpost | **DONE (5 captured), HUMAN TODO (review)** | `submission/screenshots/` has `01` to `05` PNG files, each under 400 KB, taken from the live URL. Step: look at each one, choose the order, upload to Devpost. No personal data is visible (guest context, no login). |
+| 14 | English project description and Kiro-use text | **DONE (draft)** | `submission/DEVPOST-SUBMISSION-FINAL.md`. Step: read it fully, correct anything you disagree with, paste into Devpost. |
+| 15 | Third-party assets, fonts, music, icons checked | **HUMAN TODO** | `submission/ASSET-AND-LICENSE-REGISTER.md` still has placeholder rows (icons, typography, audio, references: "TBD"). Step: list the real fonts, icons and any audio, with licenses, or write "none". (3D parts are procedurally authored per the register; verify.) |
+| 16 | Project behaves as shown, no misleading claims | **DONE (drafts)** | Both drafts state the limits: simplified DC model, no AI model connected, no real-device or screen-reader QA, Firefox/WebKit not run. Step: re-read before submitting. |
+| 17 | Optional extras (bonus prizes, blog, social posts) | **HUMAN TODO** | Not read in the rules. Claim only what you meet and read the exact requirements first. |
+| 18 | Kiro credit request | **HUMAN TODO** | Draft in `submission/KIRO-CREDIT-REQUEST.md`. The earlier draft says the deadline is Dec 1, 2026, noon PT; this was not confirmed by this fetch. Check the credit form page, and that the category is Frankenstein. Credit approval is not guaranteed. |
+| 19 | Manual QA on real devices and screen readers | **HUMAN TODO (optional but recommended)** | `docs/17-MANUAL-QA-CHECKLIST.md`: every item is NOT DONE. Do not claim real-device or screen-reader testing until you do them. |
+| 20 | CI green on GitHub | **DONE (per docs/18), HUMAN TODO (confirm)** | docs/18 reports green CI on commit 3608a86. Step: open the Actions tab on the latest commit and note the result. |
+
+## Deadlines (from the rules text that was read)
+- Submission closes **Dec 4, 2026, 2:00 pm Pacific**. No late entries. Submit early and check the Devpost page shows "Submitted", not "Draft".
+
+## Judging weights (from the earlier draft, not re-verified)
 Potential Impact 20%; Technological Implementation with Kiro 20%; Design 20%; Innovation 20%; Presentation 20%.
-
-Sources: https://kiroween.devpost.com/rules and https://kiroween.devpost.com/. If rules change, newest official rules prevail.

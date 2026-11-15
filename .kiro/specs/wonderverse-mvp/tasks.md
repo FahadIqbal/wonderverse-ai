@@ -14,7 +14,7 @@
 - [x] T10 Implement grounded tutor local fallback, then optional secured model gateway.
 - [x] T11 Add feedback states, accessibility, reduced motion, low-power/fallback handling.
 - [x] T12 Add Playwright E2E flows, CI, mobile/tablet manual QA; fix issues.
-- [-] T13 Deploy public working demo and test anonymously.
-- [~] T14 Record actual Kiro use, capture YouTube under 3 minutes, publish GitHub/LICENSE, complete Devpost.
+- [x] T13 Deploy public working demo and test anonymously.
+- [-] T14 Record actual Kiro use, capture YouTube under 3 minutes, publish GitHub/LICENSE, complete Devpost.
 
 Each T task: inspect dependency prerequisites, implement, run tests, report files/commands and actual outcomes, then update checklist. Never claim completion from visual similarity alone.

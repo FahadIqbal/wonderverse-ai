@@ -145,3 +145,7 @@ Before altering a major design decision: document original assumption, alternati
 - **Meta:** added description and theme-color to `index.html`. No analytics or tracking.
 - **Caching:** `/assets/*` gets `Cache-Control: public, max-age=31536000, immutable` (filenames are content-hashed).
 - **Not done, deliberately:** manual chunking or drei import trimming of the lazy 3D chunk (no measured win attempted; it loads only for the 3D view).
+## T14 submission preparation (2026-11-15)
+- **Prepared, not done.** Added `submission/DEMO-SCRIPT-FINAL.md`, `submission/DEVPOST-SUBMISSION-FINAL.md`, an updated `submission/COMPLIANCE-CHECKLIST.md`, `docs/19-KIRO-USAGE-RECORD.md` and five screenshots in `submission/screenshots/` (Playwright against the live URL, clean context, no console errors). No app code changed. The video, YouTube upload, Devpost submission and the manual QA in docs/17 are not done.
+- **Rules page:** only the first part of the official rules was readable (later fetches returned 403). The checklist says which parts were not read and claims no compliance.
+- **Known inconsistency, not fixed:** the dates in this log for T09 to T12 (2026-11-16 to 19) and in docs/18 do not match the commit dates (all 2026-11-15). The author should correct them.

@@ -11,7 +11,7 @@ Live demo: https://wonderverse-ai.vercel.app (hosted on Vercel, no login). Sourc
 
 ## Status
 
-Tasks T01 to T12 are done (scaffold, circuit schemas, solver, UI, 3D lab, three missions, persistence, tutor, accessibility pass, Playwright E2E and CI). T13 (deploy and anonymous test) is in progress. Test results, with exact counts and what was not tested, are in `docs/18-QA-RESULTS.md`. Decisions are in `docs/12-DECISION-LOG.md`.
+Tasks T01 to T12 are done (scaffold, circuit schemas, solver, UI, 3D lab, three missions, persistence, tutor, accessibility pass, Playwright E2E and CI). T13 (deploy and anonymous test) is done. T14 (Kiro record, video, Devpost) is partly prepared; the video, YouTube upload and Devpost submission are not done. Test results, with exact counts and what was not tested, are in `docs/18-QA-RESULTS.md`. Decisions are in `docs/12-DECISION-LOG.md`.
 
 ## Run it
 
@@ -49,6 +49,14 @@ The app works with no key and no backend. The tutor then uses the built-in **Loc
 - No AI model provider is connected. Tutor answers come from the local guide.
 - Testing used Playwright **emulation** (desktop, tablet, mobile viewports) on software WebGL. There was no real-device, real-GPU, screen-reader, Firefox or Safari testing. See `docs/17-MANUAL-QA-CHECKLIST.md`.
 - Progress is stored in the browser's localStorage only. There are no accounts.
+
+## Submission materials
+- `submission/DEVPOST-SUBMISSION-FINAL.md`: Devpost text (has a `[TODO: YouTube URL]` placeholder).
+- `submission/DEMO-SCRIPT-FINAL.md`: timed demo script and pre-recording checklist. The video is not recorded yet.
+- `submission/COMPLIANCE-CHECKLIST.md`: per-item status, with the steps only a human can do.
+- `submission/screenshots/`: five screenshots of the live site.
+- `docs/19-KIRO-USAGE-RECORD.md`: what the repo shows about Kiro use, and what it cannot show.
+- `submission/ASSET-AND-LICENSE-REGISTER.md` is still incomplete.
 
 ## Event-window disclosure
 
