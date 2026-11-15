@@ -27,6 +27,9 @@ export function CircuitDiagnostic({ graph, report }: Props) {
         <dd className="font-mono text-slate-100">{fmt(report.totalCurrent * 1000, 1)} mA</dd>
       </dl>
       {graph.components.length > 0 && (
+        // At 320 px (400% zoom) a 4-column table can be wider than the panel with some fonts. It scrolls inside this
+        // focusable region (WCAG 1.4.10 allows 2-D scrolling for data tables) instead of scrolling the whole page.
+        <div role="region" aria-label="Component readings" tabIndex={0} className="overflow-x-auto rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-observatory-gold">
         <table className="w-full text-left text-sm">
           <caption className="sr-only">Voltage and current for each component, from the simulation report</caption>
           <thead>
@@ -51,6 +54,7 @@ export function CircuitDiagnostic({ graph, report }: Props) {
             })}
           </tbody>
         </table>
+        </div>
       )}
       <p className="mt-3 text-xs text-slate-400">
         Simplified DC model: ideal battery, ohmic lamps and resistors. Not a full physics simulation.

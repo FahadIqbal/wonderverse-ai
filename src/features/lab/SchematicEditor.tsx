@@ -49,7 +49,9 @@ export function SchematicEditor() {
 
       <SchematicCanvas graph={graph} report={report} />
 
-      <div className="grid gap-4 md:grid-cols-2">
+      {/* minmax(0,1fr): an implicit auto column grows to the widest child's min-content (the diagnostic table) and
+          pushes the page sideways at 320 px when the fallback font is wide (seen with Linux fonts in CI). */}
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-2">
         <CircuitDiagnostic graph={graph} report={report} />
         <section
           aria-labelledby="parts-heading"

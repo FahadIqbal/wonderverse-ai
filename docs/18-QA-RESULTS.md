@@ -106,5 +106,19 @@ Not tested in this pass: real devices, real browsers, screen readers.
 ### After the push of 8b3690e
 - `git push origin main` succeeded (aef5e0f..8b3690e; 5f9dff1 went with it).
 - **GitHub Actions run 43725807961 on 8b3690e: failure.** Web job and tutor job passed; the Playwright job's `npm run e2e:ci` step failed after 64 s (read through the public API). The log and artifact need GitHub auth, which this pass did not have, so **the failing test and its cause are unknown**. Locally the identical command passes (73 passed, 0 failed, four runs), so the failure is probably specific to Linux/ubuntu-latest. The CI config now adds Playwright's `github` reporter so the next run shows each failure as a public check annotation (local commit, not pushed).
+- **Cause found (later):** run 43728490282 on 61b29ba failed the same way, and its public annotations name the test: `[desktop]` 400% zoom reflow (320x256), page overflow 18 px after wiring, failed on retry too (72 passed, 1 failed, 17 skipped). Linux fallback fonts are wider than macOS fonts; see "CI repair" below.
 - **Live asset hash did not change** after the push (`index-B_fBlYc_.js` before and after). This pass changed no app code, so the bundle is identical and the same hash is expected; it does not show whether Vercel deployed 8b3690e.
 - `E2E_BASE_URL=https://wonderverse-ai.vercel.app npm run e2e:ci`: 90 tests, **71 passed, 2 flaky, 17 skipped, 0 failed** (8.4 min). The 2 flaky tests (mobile: tampered-session gating, erase) each took 7.8 min on the first attempt and passed on retry; the machine was asleep for 470 s at that moment (see the flake section). The new emulation tests passed against production.
+
+## CI repair (2026-11-15)
+Defect: at 320 px the diagnostic table's min-content widened the single implicit grid column past the page (4 px with macOS fonts, 18 px on the Linux runner). Fix in `src/features/lab/SchematicEditor.tsx` (`grid-cols-[minmax(0,1fr)]`) and `src/features/lab/CircuitDiagnostic.tsx` (table in a focusable scroll region). New test: 400% zoom with a wide fallback font (fails without the fix on macOS: overflow 16 px).
+Run on macOS after the fix:
+| Command | Result |
+| --- | --- |
+| `npx tsc -b`, `npm run typecheck:e2e`, `npm run lint` | clean |
+| `npm run test:run` | 27 files, 263 tests passed |
+| `npm run build` | built |
+| `npm run e2e:ci` (CI=1, bundled Chromium, 2 workers, 1 retry), run 1 | 74 passed, 19 skipped, 0 failed, 0 flaky |
+| `npm run e2e:ci`, run 2 | 74 passed, 19 skipped, 0 failed, 0 flaky |
+| `npx playwright test` (local Chrome) | 74 passed, 19 skipped, 0 failed |
+GitHub Actions result for the fix commit: see `submission/COMPLIANCE-CHECKLIST.md` row 20 (recorded only after a run is observed).

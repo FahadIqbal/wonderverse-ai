@@ -149,14 +149,18 @@ test.describe('prefers-reduced-motion emulation', () => {
 })
 
 test.describe('zoom and reflow emulation (viewport sized to 200% and 400% zoom of 1280x800)', () => {
-  for (const [label, width, height] of [
-    ['200% zoom (640x400)', 640, 400],
-    ['400% zoom / WCAG reflow width (320x256)', 320, 256],
+  // The wide-font case forces Verdana (falling back to the platform sans, DejaVu Sans on Linux), whose wider metrics
+  // exposed an 18 px page overflow at 320 px on the Linux CI runner that macOS fonts hid.
+  for (const [label, width, height, wideFont] of [
+    ['200% zoom (640x400)', 640, 400, false],
+    ['400% zoom / WCAG reflow width (320x256)', 320, 256, false],
+    ['400% zoom (320x256) with a wide fallback font', 320, 256, true],
   ] as const) {
     test(`${label}: no page-level horizontal scroll, controls reachable, mission 1 lights the lamp`, async ({ page }) => {
       await page.setViewportSize({ width, height })
       const overflow = () => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
       await openApp(page)
+      if (wideFont) await page.addStyleTag({ content: 'html * { font-family: Verdana, "DejaVu Sans", sans-serif !important; }' })
       expect(await overflow(), 'portal').toBeLessThanOrEqual(0)
       const enter = page.getByRole('button', { name: 'Enter the Lab' })
       await enter.scrollIntoViewIfNeeded()
