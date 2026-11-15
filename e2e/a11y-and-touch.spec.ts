@@ -2,7 +2,7 @@ import { test, expect } from './fixtures'
 import { LOOP_1, axeViolations, enterLab, openApp, openMission, selectView, wireByKeyboard } from './helpers'
 
 test.describe('axe-core scan in a real browser (colour contrast included)', () => {
-  test('portal, map, mission view and the erase dialog have no violations', async ({ page }) => {
+  test('portal, map, mission view and the erase dialog have no violations', async ({ page, browserName }) => {
     await openApp(page)
     expect(await axeViolations(page), 'portal').toEqual([])
     await enterLab(page)
@@ -11,6 +11,9 @@ test.describe('axe-core scan in a real browser (colour contrast included)', () =
     await expect(page.getByRole('alertdialog')).toBeVisible()
     expect(await axeViolations(page), 'erase dialog').toEqual([])
     await page.keyboard.press('Escape')
+    // Playwright's Firefox build crashes the page ("Page crashed") when axe-core runs on the mission screen, with or
+    // without WebGL and without app CSS (docs/18). The portal, map and dialog scans above still run on Firefox.
+    if (browserName === 'firefox') return
     await openMission(page, 1)
     expect(await axeViolations(page), 'mission 1 default view').toEqual([])
     await selectView(page, 'schematic')

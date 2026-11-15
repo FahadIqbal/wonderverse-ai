@@ -71,3 +71,35 @@ Not tested in this pass: real devices, Firefox, WebKit, screen readers (docs/17)
 - The live asset hash changed from `index-DJgmfpVo.js` to `index-B_fBlYc_.js` on the third poll (about 30 s after the push). `/robots.txt` 200, `/favicon.svg` 200 (image/svg+xml), an unknown path returns 404 with the custom `404.html`, and `og:title` is in the served HTML.
 - `E2E_BASE_URL=https://wonderverse-ai.vercel.app npm run e2e:ci`: 72 tests, **67 passed, 5 skipped, 0 failed, 0 flaky** (45.9 s). This includes the new first-viewport test running against production.
 - Screenshots 03, 04 and 05 in `submission/screenshots/` were retaken from the live site (1280x800, clean context, no console errors) after this deploy.
+
+## Closing pass (2026-11-15, same machine, Node v26.13.1, Playwright 1.65.1)
+Scope: flake investigation, licence audit, engine-level Firefox/WebKit runs, new emulation checks. Bundled Chromium 159.0 (CI path), Playwright Firefox 159.0 and WebKit 27.2 builds on macOS, software GL. **Engine-level and emulated; not real Firefox, Safari, devices, GPUs or screen readers.**
+### Flake (first two desktop tests hit the 60 s timeout once)
+- **Not reproduced.** Before any change: 3 full desktop runs with retries off (22 passed each), 1 full three-project run with retries off (67 passed, 5 skipped), `--repeat-each=3` on the two tests (6 passed), and a run with 22 busy-loop processes on 11 cores (44 passed in 1.0 min instead of about 25 s). 0 failures in about 150 test executions. Normal run time of these tests is 1.5 to 2.5 s, so a 60 s timeout is a hang, not slowness.
+- **Root cause: unknown.** The 10.5 min run in the final pass was also a time when other work was running on the machine. Candidates (cold preview server, first request for the 933 kB lazy chunk, SwiftShader/GPU-process start) were not isolated.
+- **Mitigations added (not proven fixes):** `e2e/global-setup.ts` requests `/` and every file in `dist/assets` once after the webServer is up, so no test pays for a cold server or the first chunk fetch; `actionTimeout` and `navigationTimeout` of 30 s make a hung action fail with its name instead of consuming the whole test budget.
+- **After:** the two tests `--repeat-each=5` on desktop with retries off: 10 passed. Three more full three-project runs, retries off: 73 passed, 17 skipped, 0 failed, 0 flaky each (34 to 35 s). This shows no regression. It cannot show the flake is gone, because it was never reproduced. If it recurs, the retry-time trace (`trace: on-first-retry`) is the first thing to read.
+### Commands (final)
+| Command | Result |
+|---|---|
+| `npx tsc -b`, `npm run typecheck:e2e`, `npm run lint` | clean |
+| `npm run test:run` | 263 passed, 27 files (no app code changed, none added) |
+| `npm run build` | passes |
+| `npm run e2e:ci` (bundled Chromium; 30 tests x 3 projects = 90) | **73 passed, 17 skipped, 0 failed, 0 flaky** (35 s) |
+| `E2E_CROSS=1 ... --project=firefox --project=webkit --repeat-each=3` | **156 passed, 24 skipped, 0 failed** (1.0 min); 180 = 30 tests x 2 browsers x 3 |
+| `pytest` in `services/tutor` (fresh venv under /tmp from `requirements-dev.txt`) | 19 passed |
+New tests: 6 in `e2e/emulation.spec.ts` (keyboard-only walk, forced colors, two reduced-motion, two zoom viewports). The skips are by design: desktop-class only for emulation (12 on tablet and phone), plus the earlier 5.
+### Firefox and WebKit findings (opt-in projects, `E2E_CROSS=1`; not in CI)
+1. **Playwright's Firefox page crashes when axe-core runs on the mission screen** ("Page crashed"), deterministically, with or without WebGL and with app CSS removed. Narrowed to the Component tray section; axe on the same markup built by hand in a blank page does not crash, and the tray markup is valid (`<section aria-labelledby>`, disabled buttons with `aria-describedby`). I did not find the cause and I do not know whether it is Firefox, Playwright's Firefox build or axe-core. The mission-screen axe scan is therefore skipped on Firefox (portal, map and erase dialog are scanned and pass). Chromium scans all screens.
+2. **Firefox logs the warning "WebGL context was lost." when a scene is disposed**, intermittently (seen in 2 of 3 tests once, not on every run). Allowlisted in `e2e/fixtures.ts` with a reason. I did not verify that it is only disposal and not a real loss.
+3. **WebKit does not Tab to links** (Safari default behaviour), so the skip-link first-Tab test is skipped on WebKit. A keyboard-only mission walk is skipped on WebKit for the same reason (buttons). Real Safari with that setting on was not tested.
+4. No app defect was found by these runs, so no app code changed. The mission 1 flow, missions 2 and 3, tutor fallback, WebGL-off fallback, privacy and erase tests passed on both engines.
+### Emulation checks added (docs/17 items 12 to 15)
+All in `e2e/emulation.spec.ts`; they are emulation, not real-world checks.
+- Keyboard-only walk of mission 1, portal to completion dialog, using only Tab, Shift+Tab, Enter, Space and arrow keys, including dialog focus containment. Passes on Chromium and Firefox.
+- Forced colors (`emulateMedia({forcedColors:'active'})`, Chromium only): focus outline present and at least 2 px, disabled and enabled text colours differ, lamp state stays in the report text, no horizontal overflow. A screenshot is attached to the test report; **no human reviewed it**.
+- `prefers-reduced-motion`: the app sets `data-motion="calm"` when the preference is on, does not when off, and follows a live change. 3D flow-dot animation runs in the JS frame loop and cannot be observed from the DOM, so it is covered only by the existing unit tests.
+- Zoom and reflow: viewports of 640x400 (200% of 1280x800) and 320x256 (400%, the WCAG reflow width). No page-level horizontal scroll on portal, map and mission; the mission 1 loop can be wired and the lamp lights. This is a smaller viewport, not browser zoom.
+### Licences
+See `submission/ASSET-AND-LICENSE-REGISTER.md`: 84 production npm packages and 399 total, no GPL or AGPL; one package without a `license` field (`webgl-constants`, MIT per its LICENSE file). Gateway packages: no GPL or AGPL.
+Not tested in this pass: real devices, real browsers, screen readers, the live site (see below if a post-push run is recorded).

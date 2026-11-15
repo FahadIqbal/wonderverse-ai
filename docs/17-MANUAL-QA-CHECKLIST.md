@@ -1,7 +1,9 @@
 # Manual QA checklist (real devices and assistive tech)
-Status key: **NOT DONE** means nobody has performed it. Playwright device emulation (docs/18) is not a substitute for any item here. Change a status only after you actually ran the check, and add the date, device and tester.
+Status key: **NOT DONE** means nobody has performed it. **DONE-EMULATED** means an automated Playwright run (docs/18, 2026-11-15) exercised an emulation or engine-level stand-in; it is not the real-device or real-assistive-tech check and the item's real-world part is still open. Playwright device emulation (docs/18) is not a substitute for any item here. Change a status only after you actually ran the check, and add the date, device and tester.
 
-> Layout note (final pass): the mission page now puts the lab first and the objectives beside it (desktop) or below it (tablet, phone). Items 1 to 5, 13 and 20 should be run against this layout. Nothing in this file was performed in that pass; all statuses are unchanged.
+> Layout note (final pass): the mission page now puts the lab first and the objectives beside it (desktop) or below it (tablet, phone). Items 1 to 5, 13 and 20 should be run against this layout. Nothing in this file was performed in that pass.
+
+> Emulation pass (2026-11-15, after the layout pass): items 12 to 15 now carry DONE-EMULATED where `e2e/emulation.spec.ts` or the opt-in Firefox/WebKit projects (`E2E_CROSS=1`) ran. Items needing a real device, real OS setting, real GPU or screen reader are unchanged (NOT DONE).
 
 | # | Check | How | Status |
 |---|---|---|---|
@@ -16,10 +18,10 @@ Status key: **NOT DONE** means nobody has performed it. Playwright device emulat
 | 9 | NVDA or JAWS on Windows (Firefox or Chrome) | Same. | NOT DONE |
 | 10 | Real GPU rendering (integrated and discrete) | Check glow, wire flow dots and frame rate in the 3D view. All automated runs used SwiftShader software GL. | NOT DONE |
 | 11 | Low-end device or 4x CPU throttle plus Low-power mode | Check the 3D view stays usable and Low-power drops animation. | NOT DONE |
-| 12 | Safari and Firefox desktop smoke test | Playwright projects only use Chromium (Chrome or bundled). | NOT DONE |
-| 13 | 200% and 400% browser zoom | Check no content is lost or overlapped, and the schematic scrolls. | NOT DONE |
-| 14 | Windows High Contrast / forced colors visual review | Check focus rings, disabled buttons and the schematic. | NOT DONE |
-| 15 | System reduced-motion setting on a real OS | Emulated `prefers-reduced-motion` is covered in jsdom and Chrome (T11). | NOT DONE |
+| 12 | Safari and Firefox desktop smoke test | Ran Playwright's Firefox 159.0 and WebKit 27.2 builds on macOS (not Firefox or Safari releases): 156 passed, 24 skipped, 0 failed over 3 repeats (docs/18). Not done: real Safari, real Firefox, any iOS/Android browser. | **DONE-EMULATED** (engine-level) |
+| 13 | 200% and 400% browser zoom | Check no content is lost or overlapped, and the schematic scrolls. | **DONE-EMULATED** (viewport only) |
+| 14 | Windows High Contrast / forced colors visual review | Check focus rings, disabled buttons and the schematic. | **DONE-EMULATED** (Chromium media emulation) |
+| 15 | System reduced-motion setting on a real OS | Emulated `prefers-reduced-motion` is covered in jsdom and Chrome (T11). | **DONE-EMULATED** (media emulation) |
 | 16 | Network throttling (Slow 3G) cold load | Check the lazy 3D chunk shows the loading message and then the scene. | NOT DONE |
 | 17 | Tutor model outage with a real gateway | Needs a deployed gateway and a real provider (none is implemented). | NOT DONE |
 | 18 | Deployed URL smoke test in a clean profile | Part of T13. Automated clean-context Playwright run against the live URL passed (docs/18); a human check in a real private window is still open. | PARTIAL |

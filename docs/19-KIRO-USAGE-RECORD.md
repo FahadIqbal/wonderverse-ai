@@ -31,7 +31,7 @@ Each entry holds `executionId`, `chatSessionId` and a Unix `timestamp` (millisec
 
 What the file cannot tell us: which model or agent did the work, how many prompts the author wrote, what the author changed by hand, or whether any run was retried because it failed.
 
-At the time of writing, `tasks.md` and `tasks.meta.json` have uncommitted edits (T13 marked `[x]`, T14 marked `[-]`, one new execution entry each). These are status updates made by the task runner.
+Update (closing pass, 2026-11-15): `git status` shows no uncommitted change under `.kiro/`; the T13 `[x]` and T14 `[-]` marks and their metadata entries were committed in d87e132 and cd0cdfb. `git ls-files .kiro` lists 8 files (3 spec files, `tasks.meta.json`, 4 steering files). The closing pass itself ran as a separate agent session; it did not change anything under `.kiro/`, and its tool calls are not recorded in `tasks.meta.json` (the file is written by the task runner, which was not used for this pass).
 
 ## 3. How the spec workflow was applied (from the repo)
 
@@ -54,9 +54,9 @@ Each is documented in the repo; none is a claim about how much faster or better 
 - That every line of code was produced inside Kiro. The repo does not contain a Kiro session transcript. `prompts/00-MASTER-START-PROMPT.md` opens with "paste into Kiro / Codex / Claude / other coding agent", so the prompts are tool-agnostic, and the repo does not show which tool received them.
 - Credits used, session counts, or model names.
 - Whether Kiro "vibe" chat was used outside spec tasks.
-- The git history was five commits when this record was written (`086b4fc` has T01 to T12 in one commit), so history does not show per-task progress. The event-window requirement in `AGENTS.md` is supported by the commit dates (2026-11-15, inside the Oct 30 to Dec 4 submission period) and by `docs/12-DECISION-LOG.md`. No pre-event code was reused according to the README; the author must confirm this.
+- The git history was five commits when this record was written (seven by the closing pass, all dated 2026-11-15; the closing-pass commit makes eight) (`086b4fc` has T01 to T12 in one commit), so history does not show per-task progress. The event-window requirement in `AGENTS.md` is supported by the commit dates (2026-11-15, inside the Oct 30 to Dec 4 submission period) and by `docs/12-DECISION-LOG.md`. No pre-event code was reused according to the README; the author must confirm this.
 - **Date mismatch (resolved in the final pass).** The decision log and docs/18 used to date T09 to T12 as 2026-11-16 to 2026-11-19, while all git commits are dated 2026-11-15 and `tasks.meta.json` puts the T05 to T12 executions on 2026-11-15. The log and docs/18 now use 2026-11-15, matching `git log --date=iso`.
-- Hooks, MCP, Powers and other Kiro features: none are configured in `.kiro/`. Do not claim them.
+- Hooks, MCP, Powers and other Kiro features: none are configured in `.kiro/`. Do not claim them. Re-checked in the closing pass: `.kiro/` contains only `specs/` and `steering/`; there is no `hooks/` or `settings/`.
 
 ## 6. Suggested wording for Devpost
 

@@ -8,6 +8,7 @@ export const CONSOLE_ALLOWLIST: { pattern: RegExp; why: string }[] = [
   { pattern: /GPU stall due to ReadPixels|GL_CLOSE_PATH_NV/, why: 'SwiftShader software renderer performance notice' },
   { pattern: /Automatic fallback to software WebGL has been deprecated/, why: 'Chrome notice when GL runs on SwiftShader' },
   { pattern: /THREE\.Clock: This module has been deprecated/, why: 'three.js deprecation raised inside @react-three/fiber 8' },
+  { pattern: /WebGL context was lost\./, why: 'Firefox notice logged when three.js disposes a renderer on unmount (seen only in the opt-in Firefox project)' },
   { pattern: /WEBGL_lose_context extension not supported/, why: 'three.js warning when a lost context is disposed' },
 ]
 

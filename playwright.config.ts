@@ -36,6 +36,7 @@ export default defineConfig({
   workers: CI ? 2 : undefined,
   timeout: 60_000,
   expect: { timeout: 10_000 },
+  globalSetup: './e2e/global-setup.ts',
   reporter: CI ? [['list'], ['html', { open: 'never' }]] : [['list']],
   webServer: REMOTE ? undefined : {
     // Serves the production build, so E2E runs against what ships.
@@ -46,11 +47,21 @@ export default defineConfig({
   },
   use: {
     baseURL: REMOTE ?? `http://localhost:${PORT}`,
+    // A hung click or evaluate now fails in 30 s with a named action instead of using the whole 60 s test budget.
+    actionTimeout: 30_000,
+    navigationTimeout: 30_000,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     serviceWorkers: 'block',
   },
   projects: [
+    // Opt-in engine-level runs (E2E_CROSS=1): Playwright's Firefox and WebKit builds, not Firefox/Safari releases.
+    ...(process.env.E2E_CROSS
+      ? [
+          { name: 'firefox', use: { browserName: 'firefox' as const, viewport: { width: 1280, height: 800 } } },
+          { name: 'webkit', use: { browserName: 'webkit' as const, viewport: { width: 1280, height: 800 } } },
+        ]
+      : []),
     { name: 'desktop', use: { ...use, viewport: { width: 1280, height: 800 } } },
     {
       name: 'tablet',

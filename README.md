@@ -11,7 +11,7 @@ Live demo: https://wonderverse-ai.vercel.app (hosted on Vercel, no login). Sourc
 
 ## Status
 
-Tasks T01 to T12 are done (scaffold, circuit schemas, solver, UI, 3D lab, three missions, persistence, tutor, accessibility pass, Playwright E2E and CI). T13 (deploy and anonymous test) is done. A final pass moved the lab to the top of the mission page (`docs/12`, `docs/18`). T14 (Kiro record, video, Devpost) is partly prepared; the video, YouTube upload and Devpost submission are not done. Test results, with exact counts and what was not tested, are in `docs/18-QA-RESULTS.md`. Decisions are in `docs/12-DECISION-LOG.md`.
+Tasks T01 to T12 are done (scaffold, circuit schemas, solver, UI, 3D lab, three missions, persistence, tutor, accessibility pass, Playwright E2E and CI). T13 (deploy and anonymous test) is done. A final pass moved the lab to the top of the mission page (`docs/12`, `docs/18`). A closing pass (2026-11-15) added emulation checks (forced colors, reduced motion, zoom/reflow viewports, keyboard-only mission 1), opt-in Firefox and WebKit engine runs, a licence audit and an E2E warm-up (`docs/18`). T14 (Kiro record, video, Devpost) is partly prepared; the video, YouTube upload and Devpost submission are not done. Test results, with exact counts and what was not tested, are in `docs/18-QA-RESULTS.md`. Decisions are in `docs/12-DECISION-LOG.md`.
 
 ## Run it
 
@@ -34,6 +34,7 @@ npm run typecheck:e2e
 npx playwright install chromium   # once, if you have no Chrome
 npm run e2e                # Playwright; builds the app and serves it on port 4173
 npm run e2e:ci             # same, with the CI settings (bundled Chromium)
+npx playwright install firefox webkit && E2E_CROSS=1 npm run e2e -- --project=firefox --project=webkit   # optional engine-level runs
 ```
 
 To run the E2E suite against an already deployed site, set `E2E_BASE_URL` (see `playwright.config.ts`).
@@ -47,7 +48,7 @@ The app works with no key and no backend. The tutor then uses the built-in **Loc
 - The solver models **simplified DC circuits** (ideal battery, resistive lamps, switches). It is a teaching model, not a general circuit simulator.
 - Nothing here is real electrical safety advice. The tutor refuses mains and outlet topics and must not be used as a guide for working with real electricity.
 - No AI model provider is connected. Tutor answers come from the local guide.
-- Testing used Playwright **emulation** (desktop, tablet, mobile viewports) on software WebGL. There was no real-device, real-GPU, screen-reader, Firefox or Safari testing. See `docs/17-MANUAL-QA-CHECKLIST.md`.
+- Testing used Playwright **emulation** (desktop, tablet, mobile viewports) on software WebGL. Playwright's Firefox and WebKit builds ran the same suite once (opt-in, engine-level, not Firefox or Safari releases), plus forced-colors, reduced-motion and zoom-sized viewport emulation. There was no real-device, real-GPU, screen-reader, or real Safari/Firefox testing. See `docs/17-MANUAL-QA-CHECKLIST.md`.
 - Progress is stored in the browser's localStorage only. There are no accounts.
 
 ## Submission materials

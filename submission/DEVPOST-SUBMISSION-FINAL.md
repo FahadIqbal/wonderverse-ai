@@ -73,8 +73,8 @@ Scope: one macOS machine, Node 26.13.1, Playwright 1.65.1, Chrome and bundled Ch
 ## Honest limitations
 - The solver models simplified DC circuits only: an ideal battery, fixed-resistance lamps and resistors, switches. It is a teaching model, not a general simulator, and not electrical-safety advice.
 - No AI model is connected. The tutor is the offline Local guide.
-- No real-device, real-GPU or screen-reader testing has been done. Phone and tablet results are Chrome emulation.
-- Firefox and Safari/WebKit were not run.
+- No real-device, real-GPU or screen-reader testing has been done. Phone and tablet results are Chrome emulation, and forced-colors, reduced-motion and zoom checks are media-feature or viewport emulation.
+- Firefox and Safari/WebKit were run only as Playwright engine builds (Firefox 159.0, WebKit 27.2) with the same suite, not as real Firefox or Safari releases, and not on iOS. The Firefox run skips the axe scan on the mission screen because Playwright's Firefox page crashes there (cause not found).
 - No user study, no usage data and no performance benchmarks exist, so we make no claims about learning outcomes or speed.
 - Progress is browser-local; there are no accounts.
 - Mission 3 is covered by automated tests and is not shown being played in the demo video.
