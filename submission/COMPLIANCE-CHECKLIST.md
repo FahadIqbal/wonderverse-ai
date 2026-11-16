@@ -36,3 +36,6 @@ Legend: **DONE** = checked, with evidence. **HUMAN TODO** = only the author can 
 
 ## Judging weights (from the earlier draft, not re-verified)
 Potential Impact 20%; Technological Implementation with Kiro 20%; Design 20%; Innovation 20%; Presentation 20%.
+
+## Limitation to state in the submission (2026-11-16)
+The live AI tutor is available only if the owner configures `TUTOR_PROVIDER`, `TUTOR_MODEL` and `TUTOR_API_KEY` in Vercel and redeploys. No key is in the repository, no provider has been called for real (tests use mocked responses), and the default deployment uses the offline Local guide. Say "AI tutor available when configured", not "AI-powered tutor", unless the owner has turned it on and checked it. `[HUMAN TODO: if you turn it on, ask a few real questions in the browser, check the label and note, and update this line]`

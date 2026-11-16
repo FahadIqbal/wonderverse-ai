@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && npm run build:api && vite build",
+    "build:api": "node scripts/build-api.mjs",
+    "check:api": "node scripts/build-api.mjs --check",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",
@@ -37,6 +39,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.6.2",
     "axe-core": "^4.14.0",
+    "esbuild": "^0.25.12",
     "eslint": "^9.17.0",
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.16",

@@ -9,7 +9,7 @@ App: https://wonderverse-ai.vercel.app (the deployed site, not localhost). Every
 - The lab (3D bench or schematic) is at the top left of the mission page, with objectives, concept check, finish button and tutor in a panel on the right. On a 1280x800 window the whole 3D stage is on screen with no scrolling and no browser zoom (checked by an E2E assertion and a screenshot). The component list and the Circuit diagnostic table are further down the page; scroll once to show the diagnostic table next to a lit lamp.
 - Mission 1 starts with the battery, switch and lamp placed and **no wires**. The switch starts open.
 - Missions unlock in order. Mission 3 stays locked until mission 2 is done, so this script shows mission 3 only as a map card. Do not imply it was played in the video.
-- The tutor is the **Local guide** (offline, rule-based, reads the solver report). No AI model is connected. Say so. The UI labels the answer "Local guide".
+- The tutor is the **Local guide** (offline, rule-based, reads the solver report) unless the owner has configured an AI key (then answers labelled "AI tutor" may appear; check the label before narrating). Say which one you are showing. The UI labels the answer "Local guide" or "AI tutor".
 - Do not say "real physics". Say "simplified DC model: ideal battery, fixed-resistance lamps".
 
 ## Pre-recording checklist

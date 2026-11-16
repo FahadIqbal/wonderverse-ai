@@ -47,6 +47,7 @@ describe('TutorPanel', () => {
     expect(busy).toBeDisabled()
     expect(busy).toHaveAttribute('aria-busy', 'true')
     expect(screen.getByTestId('tutor-response')).toHaveTextContent('looking at the circuit report')
+    expect(screen.queryByText(/AI can be wrong/)).not.toBeInTheDocument() // no AI note before a validated AI reply
     await act(async () => release({ text: 'Which wire is missing?', kind: 'hint', source: 'remote' }))
     expect(await screen.findByTestId('tutor-source')).toHaveTextContent('AI tutor')
     expect(screen.getByText(/AI can be wrong; the circuit report is the source of truth/)).toBeInTheDocument()
@@ -57,6 +58,17 @@ describe('TutorPanel', () => {
     render(<TutorPanel adapter={remoteDown} />)
     await userEvent.setup().click(screen.getByRole('button', { name: 'Ask for a hint' }))
     expect(await screen.findByTestId('tutor-source')).toHaveTextContent('Local guide · offline hint')
+    expect(screen.queryByText(/AI can be wrong/)).not.toBeInTheDocument()
+    expect(screen.getByText(/Local guide works offline/)).toBeInTheDocument()
+  })
+  it('shows neither the AI label nor the AI note when the AI reply is rejected for an invented number', async () => {
+    startMission()
+    const invented: TutorAdapter = { id: 'remote', getHint: async () => ({ text: 'The lamp gets 88 volts, so look at the switch.', kind: 'hint', source: 'remote' }) }
+    render(<TutorPanel adapter={invented} />)
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Ask for a hint' }))
+    expect(await screen.findByTestId('tutor-source')).toHaveTextContent('Local guide · offline hint')
+    expect(screen.getByTestId('tutor-text')).not.toHaveTextContent('88')
+    expect(screen.queryByText(/AI can be wrong/)).not.toBeInTheDocument()
   })
 
   it('shows an error state with retry when asking fails unexpectedly', async () => {

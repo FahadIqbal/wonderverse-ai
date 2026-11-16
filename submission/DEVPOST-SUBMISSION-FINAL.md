@@ -35,11 +35,11 @@ Hands-on science is hard to set up and hard to personalize. We wanted a place wh
 - **3D bench with a schematic alternative.** Learners connect a battery, switch and lamps by clicking ports in a 3D scene. A keyboard-operable schematic view and a port list edit the same circuit.
 - **Deterministic solver.** A pure TypeScript module computes voltages, currents, lamp state and a reason code for every change. Lamps glow only when the solver report says they are energized. A diagnostic table shows the numbers (for example 3.00 V and 499.9 mA for a lit one-lamp loop).
 - **Three missions** with a state machine: 1) Complete the Loop, 2) Fix the Fault (a missing return wire), 3) Light the City (two lamps in parallel; one can go dark while the other stays on). Each has objectives, a concept check and a completion summary. Missions unlock in order and progress is saved in the browser.
-- **Tutor ("Nova").** Hints are built from the solver report and mission state. The only tutor that runs in the deployed app is the offline **Local guide**. There is an optional FastAPI gateway in `services/tutor`, but **no model provider is connected**, so the app always uses the Local guide.
+- **Tutor ("Nova").** Hints are built from the solver report and mission state. The tutor that runs in the deployed app is the offline **Local guide**. A live AI tutor is built (a Vercel function, `/api/hint`, with OpenAI, Anthropic, Gemini and OpenRouter selectable) and is **available only if the site owner configures an API key**; no key is configured in the repository and it has been tested only with mocked provider responses. When it is on, every AI reply is checked against the circuit report (numbers must come from it) and labelled "AI tutor" with a note that AI can be wrong; any failure shows the Local guide, labelled "Local guide · offline hint".
 - **Privacy and recovery.** Progress is stored in localStorage only. "Erase my progress" clears it. If WebGL is unavailable or a 3D scene fails, the schematic is used and mission 1 can still be finished.
 
 ## How we built it
-- **Stack** (from `package.json`): React 18, TypeScript 5.6 (strict), Vite 6, three.js with @react-three/fiber and @react-three/drei, Tailwind CSS 3, Zustand 5, Zod 3. Tests: Vitest 2, Testing Library, fast-check, axe-core, Playwright. Lint: ESLint 9. Optional gateway: FastAPI with pytest. Hosting: Vercel (static). CI: GitHub Actions. Fonts (Inter, JetBrains Mono) are self-hosted under the OFL.
+- **Stack** (from `package.json`): React 18, TypeScript 5.6 (strict), Vite 6, three.js with @react-three/fiber and @react-three/drei, Tailwind CSS 3, Zustand 5, Zod 3. Tests: Vitest 2, Testing Library, fast-check, axe-core, Playwright. Lint: ESLint 9. Optional older gateway: FastAPI with pytest. Hosting: Vercel (static site plus one serverless function for the optional AI tutor). CI: GitHub Actions. Fonts (Inter, JetBrains Mono) are self-hosted under the OFL.
 - **Architecture.** `CircuitGraph` reducer, then `solveCircuit`, then an immutable report, then the mission evaluator, the 3D scene, the schematic and the tutor. Renderers and tutor only read the report. The solver has no rendering imports.
 - **Kiro.** The repo tracks `.kiro/steering/` (product, tech, structure, quality) and `.kiro/specs/wonderverse-mvp/` (requirements in EARS form R1 to R9, design, and a task list T01 to T14 with `tasks.meta.json` execution history). Work followed the spec task by task, and `docs/12-DECISION-LOG.md` records decisions per task. The full, evidence-based account, including what cannot be verified, is in `docs/19-KIRO-USAGE-RECORD.md`. No Kiro hooks or MCP servers are configured in this repo, and we did not use any.
 
@@ -52,9 +52,9 @@ Hands-on science is hard to set up and hard to personalize. We wanted a place wh
 
 ## Accomplishments (test counts from `docs/18-QA-RESULTS.md`)
 Scope: one macOS machine, Node 26.13.1, Playwright 1.65.1, Chrome and bundled Chromium, software WebGL (SwiftShader), Playwright **emulation** for tablet and phone sizes. Dates are 2026-11-15 and 2026-11-16.
-- `npm run test:run`: **284 unit and property tests passed**, in 29 files.
-- `npm run e2e:ci` (bundled Chromium): **74 passed, 19 skipped, 0 failed** (93 = 31 tests x 3 projects). The skips are by design (tests that apply to one device class only).
-- The same E2E suite against the live URL (`E2E_BASE_URL=https://wonderverse-ai.vercel.app`) on the polish build: 74 passed, 19 skipped, 0 failed (docs/18).
+- `npm run test:run`: **396 unit and property tests passed**, in 41 files.
+- `npm run e2e:ci` (bundled Chromium): **111 passed, 24 skipped, 0 failed** (135 = 45 tests x 3 projects). The skips are by design (tests that apply to one device class only).
+- The same E2E suite against the live URL (`E2E_BASE_URL=https://wonderverse-ai.vercel.app`): `[TODO: fill from docs/18 after the final deploy]`.
 - `pytest` for the tutor gateway: 19 passed.
 - `tsc -b` and `npm run lint`: clean in that run.
 - GitHub Actions CI (web, e2e, tutor jobs): success on 1e7544b (run 43734538913, read through the public API). `[TODO: confirm on the Actions tab for the final commit]`
@@ -66,14 +66,14 @@ Scope: one macOS machine, Node 26.13.1, Playwright 1.65.1, Chrome and bundled Ch
 - Automated accessibility checks found real problems, and they are still not a substitute for a screen-reader test.
 
 ## What's next
-- Add a real model provider behind the existing gateway, keeping the Local guide as fallback.
+- Turn on the live AI tutor with a real provider key and measure it (answer quality, latency, how often the validator rejects a reply); it has not been run against a real provider yet. Keep the Local guide as the fallback.
 - Test with real phones, tablets and screen readers (the checklist is `docs/17-MANUAL-QA-CHECKLIST.md`).
 - Trim the lazy 3D chunk (about 936 kB, 251 kB gzip).
 - More circuit content (for example series versus parallel comparisons) and a free-play mode.
 
 ## Honest limitations
 - The solver models simplified DC circuits only: an ideal battery, fixed-resistance lamps and resistors, switches. It is a teaching model, not a general simulator, and not electrical-safety advice.
-- No AI model is connected. The tutor is the offline Local guide.
+- The live AI tutor works only if the site owner adds a provider key in Vercel; until then (and on any failure or rejected reply) the tutor is the offline Local guide. It has been tested with mocked provider responses only, never against a live provider. AI replies can be wrong; the circuit report is the source of truth.
 - No real-device, real-GPU or screen-reader testing has been done. Phone and tablet results are Chrome emulation, and forced-colors, reduced-motion and zoom checks are media-feature or viewport emulation.
 - Firefox and Safari/WebKit were run only as Playwright engine builds (Firefox 159.0, WebKit 27.2) with the same suite, not as real Firefox or Safari releases, and not on iOS. The Firefox run skips the axe scan on the mission screen because Playwright's Firefox page crashes there (cause not found).
 - No user study, no usage data and no performance benchmarks exist, so we make no claims about learning outcomes or speed.
@@ -81,7 +81,7 @@ Scope: one macOS machine, Node 26.13.1, Playwright 1.65.1, Chrome and bundled Ch
 - Mission 3 is covered by automated tests and is not shown being played in the demo video.
 
 ## Built with
-React, TypeScript, Vite, three.js, @react-three/fiber, @react-three/drei, Tailwind CSS, Zustand, Zod, Vitest, Testing Library, fast-check, axe-core, Playwright, ESLint, FastAPI (optional gateway), Vercel, GitHub Actions, Kiro.
+React, TypeScript, Vite, three.js, @react-three/fiber, @react-three/drei, Tailwind CSS, Zustand, Zod, Vitest, Testing Library, fast-check, axe-core, Playwright, ESLint, Vercel (static site and one serverless function), FastAPI (optional older gateway), GitHub Actions, Kiro.
 
 ## Kiro use (short form for the Devpost Kiro field)
 Kiro specs (`.kiro/specs/wonderverse-mvp`: requirements R1 to R9, design, tasks T01 to T14 with execution history) and four steering files (`.kiro/steering/`) drive the build. Specs shaped the architecture (solver report as the only source of truth for the renderers and tutor) and the test plan. Hooks and MCP were not used. See `docs/19-KIRO-USAGE-RECORD.md`.

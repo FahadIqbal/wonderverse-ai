@@ -16,7 +16,7 @@ export interface TutorResult {
 export const STATIC_FALLBACK =
   "I can't read the circuit report right now. Look at the circuit diagnostic below the workbench and trace a loop from the battery and back."
 
-export const DEFAULT_TIMEOUT_MS = 6000
+export const DEFAULT_TIMEOUT_MS = 10_000
 
 function deepFreeze<T>(v: T): T {
   if (v && typeof v === 'object') {

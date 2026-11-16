@@ -7,7 +7,7 @@ import type { CircuitGraph, ComponentType } from '../../../domain/circuit'
 
 function graphWith(types: ComponentType[]): CircuitGraph {
   let g = createEmptyGraph()
-  for (const t of types) g = circuitReducer(g, { type: 'ADD_COMPONENT', component: createComponent(g, t) })
+  for (const t of types) g = circuitReducer(g, { type: 'ADD_COMPONENT', component: createComponent(g, t)! })
   return g
 }
 
@@ -73,7 +73,7 @@ describe('terminalWorldPosition', () => {
 describe('lampGlow (driven only by the report)', () => {
   function closedLoop() {
     let g = createEmptyGraph()
-    for (const t of ['battery', 'lamp'] as const) g = circuitReducer(g, { type: 'ADD_COMPONENT', component: createComponent(g, t) })
+    for (const t of ['battery', 'lamp'] as const) g = circuitReducer(g, { type: 'ADD_COMPONENT', component: createComponent(g, t)! })
     g = circuitReducer(g, { type: 'ADD_WIRE', wire: { id: 'w1', fromTerminalId: 'battery-1-pos', toTerminalId: 'lamp-1-a' } })
     g = circuitReducer(g, { type: 'ADD_WIRE', wire: { id: 'w2', fromTerminalId: 'lamp-1-b', toTerminalId: 'battery-1-neg' } })
     return g
@@ -171,7 +171,7 @@ describe('fitCameraDistance', () => {
 describe('lamp pulse decision (pure)', () => {
   function closedLoop() {
     let g = createEmptyGraph()
-    for (const t of ['battery', 'lamp'] as const) g = circuitReducer(g, { type: 'ADD_COMPONENT', component: createComponent(g, t) })
+    for (const t of ['battery', 'lamp'] as const) g = circuitReducer(g, { type: 'ADD_COMPONENT', component: createComponent(g, t)! })
     g = circuitReducer(g, { type: 'ADD_WIRE', wire: { id: 'w1', fromTerminalId: 'battery-1-pos', toTerminalId: 'lamp-1-a' } })
     g = circuitReducer(g, { type: 'ADD_WIRE', wire: { id: 'w2', fromTerminalId: 'lamp-1-b', toTerminalId: 'battery-1-neg' } })
     return g

@@ -27,8 +27,11 @@ class MemoryStorage implements Storage {
     this.data.set(key, String(value))
   }
 }
-Object.defineProperty(window, 'localStorage', { value: new MemoryStorage(), configurable: true })
-installConsoleGuard()
-afterEach(() => {
-  cleanup()
-})
+// Server tests (server/**) run in the node environment, where there is no window to patch.
+if (typeof window !== 'undefined') {
+  Object.defineProperty(window, 'localStorage', { value: new MemoryStorage(), configurable: true })
+  installConsoleGuard()
+  afterEach(() => {
+    cleanup()
+  })
+}

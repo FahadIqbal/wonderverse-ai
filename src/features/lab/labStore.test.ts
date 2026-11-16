@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createEmptyGraph, isLampIlluminated, SolverStatus } from '../../domain/circuit'
-import { selectReport, useLabStore } from './labStore'
+import { BENCH_BOUNDS, componentPosition, footprintsOverlap } from '../../domain/circuit'
+import { BENCH_FULL_TEXT, selectReport, useLabStore } from './labStore'
 
 const reset = () =>
   useLabStore.setState({ graph: createEmptyGraph(), pendingTerminalId: null, feedback: null })
@@ -25,7 +26,7 @@ describe('labStore', () => {
     const s = useLabStore.getState()
     const first = s.addComponent('lamp')
     const second = s.addComponent('lamp')
-    s.removeComponent(first)
+    s.removeComponent(first!)
     const third = useLabStore.getState().addComponent('lamp')
     expect(third).not.toBe(second)
     expect(useLabStore.getState().graph.components.map(c => c.id).sort()).toEqual([second, third].sort())
@@ -94,5 +95,31 @@ describe('labStore', () => {
     const { components } = useLabStore.getState().graph
     expect(components.find(c => c.id === 'switch-1')!.isOn).toBe(true)
     expect(components.find(c => c.id === 'lamp-1')!.isOn).toBe(false)
+  })
+  it('places every added part inside the bench and apart from the others, then reports a full bench', () => {
+    const s = useLabStore.getState()
+    const pastBefore = s.past.length
+    let added = 0
+    for (; added < 40; added++) if (s.addComponent('lamp') === null) break
+    const state = useLabStore.getState()
+    expect(added).toBeGreaterThanOrEqual(6)
+    expect(added).toBeLessThan(40)
+    expect(state.graph.components).toHaveLength(added)
+    const spots = state.graph.components.map(componentPosition)
+    for (const p of spots) {
+      expect(p.x).toBeGreaterThanOrEqual(BENCH_BOUNDS.minX)
+      expect(p.x).toBeLessThanOrEqual(BENCH_BOUNDS.maxX)
+      expect(p.y).toBeGreaterThanOrEqual(BENCH_BOUNDS.minY)
+      expect(p.y).toBeLessThanOrEqual(BENCH_BOUNDS.maxY)
+    }
+    spots.forEach((a, i) => spots.slice(i + 1).forEach(b => expect(footprintsOverlap(a, b)).toBe(false)))
+    expect(state.feedback).toEqual({ kind: 'error', text: BENCH_FULL_TEXT })
+    expect(state.past.length - pastBefore).toBe(added) // the refused add recorded no history step
+  })
+  it('the seventh part lands on the bench, not in the old out-of-bounds third row', () => {
+    const s = useLabStore.getState()
+    for (let i = 0; i < 7; i++) s.addComponent('resistor')
+    const seventh = useLabStore.getState().graph.components[6]
+    expect(componentPosition(seventh).y).toBeLessThanOrEqual(BENCH_BOUNDS.maxY)
   })
 })

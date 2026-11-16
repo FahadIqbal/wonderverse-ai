@@ -1,12 +1,15 @@
 import { z } from 'zod'
 import { localTutor, TutorContext, TutorQuestion, type TutorAdapter, type TutorResponse } from '../../domain/learning'
 
-export const REMOTE_TIMEOUT_MS = 5000
+/** Longer than the function's own 8 s provider timeout, so the server answers (or times out) first. */
+export const REMOTE_TIMEOUT_MS = 9000
+/** Base path of the Vercel function. The adapter posts to `${base}/hint`. */
+export const SAME_ORIGIN_GATEWAY = '/api'
 
 const GatewayReply = z.object({ text: z.string() })
 
 export interface RemoteTutorOptions {
-  /** Gateway base URL, e.g. https://tutor.example.org. The adapter posts to `${url}/hint`. */
+  /** Gateway base URL or same-origin path, e.g. https://tutor.example.org or /api. The adapter posts to `${url}/hint`. */
   url: string
   timeoutMs?: number
   fetchImpl?: typeof fetch
@@ -57,8 +60,16 @@ export function parseTutorUrl(value: string | undefined): string | undefined {
   }
 }
 
-/** The adapter the app uses: remote only when VITE_TUTOR_URL is set to a valid URL, otherwise the local guide. */
-export function getConfiguredTutor(url: string | undefined = import.meta.env.VITE_TUTOR_URL): TutorAdapter {
+/**
+ * The adapter the app uses. Remote when VITE_TUTOR_URL is a valid URL (the optional FastAPI gateway), or when
+ * VITE_TUTOR_MODE is `remote` (the same-origin Vercel function at /api/hint). Otherwise the local guide.
+ * Either way, every reply is validated and a failure falls back to the local guide.
+ */
+export function getConfiguredTutor(
+  url: string | undefined = import.meta.env.VITE_TUTOR_URL,
+  mode: string | undefined = import.meta.env.VITE_TUTOR_MODE,
+): TutorAdapter {
   const parsed = parseTutorUrl(url)
-  return parsed ? createRemoteTutor({ url: parsed }) : localTutor
+  if (parsed) return createRemoteTutor({ url: parsed })
+  return mode === 'remote' ? createRemoteTutor({ url: SAME_ORIGIN_GATEWAY }) : localTutor
 }

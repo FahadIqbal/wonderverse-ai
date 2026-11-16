@@ -1,4 +1,6 @@
-# Tutor gateway (optional)
+# Tutor gateway (optional, secondary)
+> The primary tutor gateway is now the Vercel function `POST /api/hint` (`server/tutor/`, bundled to `api/hint.js`), which supports OpenAI, Anthropic, Gemini and OpenRouter. This FastAPI service is kept and still tested, but it has no real provider. See docs/12-DECISION-LOG.md.
+
 
 The app works without this service: with no `VITE_TUTOR_URL` the browser uses the offline Local guide.
 This gateway exists so a model key can stay on a server. It never receives circuit graphs, only the bounded

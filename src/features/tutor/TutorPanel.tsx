@@ -10,7 +10,7 @@ import { getConfiguredTutor } from './remoteTutor'
 type Status = 'idle' | 'loading' | 'error'
 
 export interface TutorPanelProps {
-  /** Defaults to the adapter configured by VITE_TUTOR_URL (the local guide when unset). */
+  /** Defaults to the configured adapter: VITE_TUTOR_URL, or the same-origin /api/hint when VITE_TUTOR_MODE=remote, else the local guide. */
   adapter?: TutorAdapter
   /** Test seam. Defaults to `resolveHint`. */
   resolve?: typeof resolveHint
@@ -37,6 +37,7 @@ export function TutorPanel({ adapter, resolve = resolveHint }: TutorPanelProps) 
   const atCap = level >= cap
   const disabled = loading || finished || atCap
   const remote = tutor.id === 'remote'
+  const aiAnswered = !loading && status === 'idle' && result?.source === 'remote'
 
   async function ask() {
     const ticket = ++latest.current
@@ -120,9 +121,11 @@ export function TutorPanel({ adapter, resolve = resolveHint }: TutorPanelProps) 
         )}
       </div>
       <p id="tutor-note" className="mt-2 text-xs text-slate-400">
-        {remote
+        {aiAnswered
           ? 'AI can be wrong; the circuit report is the source of truth. If a hint does not match the diagnostic, trust the diagnostic.'
-          : 'The Local guide works offline and only uses what the circuit report says.'}{' '}
+          : remote && result === null
+            ? 'Nova may use an AI tutor when one is available; otherwise the offline Local guide answers from the circuit report.'
+            : 'The Local guide works offline and only uses what the circuit report says.'}{' '}
         This is a simplified simulation. Never experiment with wall power or real electrical outlets.
       </p>
     </section>

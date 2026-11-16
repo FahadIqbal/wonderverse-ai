@@ -41,8 +41,9 @@ export default defineConfig({
   // downloading the artifact.
   reporter: CI ? [['list'], ['html', { open: 'never' }], ...(process.env.GITHUB_ACTIONS ? [['github'] as ['github']] : [])] : [['list']],
   webServer: REMOTE ? undefined : {
-    // Serves the production build, so E2E runs against what ships.
-    command: `npm run build && npx vite preview --port ${PORT} --strictPort`,
+    // Serves the production build, so E2E runs against what ships. The build is made in tutor `remote` mode so the
+    // browser really calls /api/hint; e2e/fixtures.ts answers that route (503 by default, like a deployment with no key).
+    command: `VITE_TUTOR_MODE=remote npm run build && npx vite preview --port ${PORT} --strictPort`,
     url: `http://localhost:${PORT}`,
     reuseExistingServer: !CI,
     timeout: 240_000,

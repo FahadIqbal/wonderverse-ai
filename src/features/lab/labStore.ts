@@ -3,7 +3,7 @@ import {
   circuitReducer,
   createEmptyGraph,
   describeCell,
-  isCellFree,
+  findFreeCell,
   planMove,
   terminalCenter,
   solveCircuit,
@@ -58,7 +58,8 @@ export interface LabState {
   redo: () => void
   /** Returns the circuit to `baseline`. This is itself an edit, so it can be undone. */
   resetToSetup: () => void
-  addComponent: (type: PlaceableType) => string
+  /** Adds a part on a free in-bounds cell. Returns its id, or null (with error feedback) when the bench is full. */
+  addComponent: (type: PlaceableType) => string | null
   removeComponent: (componentId: string) => void
   removeWire: (wireId: string) => void
   toggleSwitch: (componentId: string) => void
@@ -91,11 +92,9 @@ function slotCenter(slot: number) {
   }
 }
 
-function firstFreeSlot(graph: CircuitGraph): number {
-  for (let slot = 0; ; slot++) {
-    if (isCellFree(graph, '', slotCenter(slot))) return slot
-  }
-}
+/** Tidy authored slots first; `findFreeCell` falls back to scanning the bench. Out-of-bounds slots are skipped there. */
+const PREFERRED_SLOTS = Array.from({ length: 2 * SLOT_COLUMNS }, (_, slot) => slotCenter(slot))
+export const BENCH_FULL_TEXT = 'The bench is full. Remove a part or move one to make room.'
 const DISPLAY_NAME: Record<ComponentType, string> = {
   battery: 'Battery',
   lamp: 'Lamp',
@@ -111,10 +110,13 @@ function nextIndex(graph: CircuitGraph, type: ComponentType): number {
   return n
 }
 
-export function createComponent(graph: CircuitGraph, type: ComponentType): CircuitComponent {
+/** Builds a new part on a free in-bounds cell, or returns undefined when the bench has no room. */
+export function createComponent(graph: CircuitGraph, type: ComponentType): CircuitComponent | undefined {
+  const cell = findFreeCell(graph, PREFERRED_SLOTS)
+  if (!cell) return undefined
   const n = nextIndex(graph, type)
   const id = `${type}-${n}`
-  const { x, y } = slotCenter(firstFreeSlot(graph))
+  const { x, y } = cell
   const position = { x, y }
   const left = { x: x - HALF_SPAN, y }
   const right = { x: x + HALF_SPAN, y }
@@ -217,6 +219,10 @@ export const useLabStore = create<LabState>((set, get) => ({
 
   addComponent: type => {
     const component = createComponent(get().graph, type)
+    if (!component) {
+      set({ feedback: { kind: 'error', text: BENCH_FULL_TEXT } })
+      return null
+    }
     get().dispatch({ type: 'ADD_COMPONENT', component })
     set({ feedback: { kind: 'info', text: `Added ${component.label}.` } })
     return component.id

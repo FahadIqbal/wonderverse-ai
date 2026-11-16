@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { buildTutorContext, localTutor, resolveHint, mission1, solveCircuitForTest } from './testSupport'
-import { createRemoteTutor, getConfiguredTutor, parseTutorUrl } from './remoteTutor'
+import { createRemoteTutor, getConfiguredTutor, parseTutorUrl, SAME_ORIGIN_GATEWAY } from './remoteTutor'
 
 const ctx = buildTutorContext(solveCircuitForTest(mission1.setupGraph, mission1))
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
@@ -36,6 +36,21 @@ describe('RemoteTutor', () => {
 })
 
 describe('configuration', () => {
+  it('posts to the same-origin /api/hint when the mode is remote, and VITE_TUTOR_URL still wins', async () => {
+    const fetchImpl = vi.fn(async () => json({ text: 'Which wire is missing?', source: 'ai' }))
+    const r = await resolveHint(createRemoteTutor({ url: SAME_ORIGIN_GATEWAY, fetchImpl }), ctx)
+    expect(r).toMatchObject({ source: 'remote', offlineFallback: false })
+    expect((fetchImpl.mock.calls[0] as unknown as [string])[0]).toBe('/api/hint')
+    expect(getConfiguredTutor(undefined, 'remote').id).toBe('remote')
+    expect(getConfiguredTutor(undefined, 'local')).toBe(localTutor)
+    expect(getConfiguredTutor(undefined, undefined)).toBe(localTutor)
+    expect(getConfiguredTutor('https://tutor.test', 'local').id).toBe('remote')
+  })
+  it('rejects an AI reply that quotes a number the circuit report does not contain', async () => {
+    const fetchImpl = async () => json({ text: 'The lamp gets 88 volts right now.', source: 'ai' })
+    const r = await resolveHint(createRemoteTutor({ url: SAME_ORIGIN_GATEWAY, fetchImpl }), ctx)
+    expect(r).toMatchObject({ source: 'local', offlineFallback: true, fallbackReason: 'ungrounded' })
+  })
   it('uses the local guide unless VITE_TUTOR_URL is a valid http(s) URL', () => {
     expect(getConfiguredTutor(undefined)).toBe(localTutor)
     expect(getConfiguredTutor('')).toBe(localTutor)

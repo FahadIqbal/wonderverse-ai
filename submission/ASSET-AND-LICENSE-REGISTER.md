@@ -60,3 +60,6 @@ No GPL, AGPL or LGPL package. The requirements use open version ranges, so a lat
 
 ## Rules
 Do not add assets without recording rights. Use recognizable brand assets or copyrighted music only with express permission. Include third-party notices if licenses require it.
+
+## Build tool added for the serverless tutor function
+`esbuild` 0.25.12 (MIT, from its package.json) is now an explicit devDependency. It was already installed as a Vite dependency. It bundles `server/tutor` into `api/hint.js` and is not shipped to the browser. The provider APIs (OpenAI, Anthropic, Google Gemini, OpenRouter) are called over HTTPS from the serverless function only when the owner configures a key; no provider SDK or provider asset is in the repository.

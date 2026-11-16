@@ -182,3 +182,18 @@ First-load JS on the portal (Playwright, response bodies, uncompressed): 293.5 -
 - One earlier full run reported 1 flaky (final switch click after a drag landed before the feedback bar had settled and shifted the stage). The test now waits for the message and re-centres the stage; 6 repeats of that test passed. Not proof it cannot recur.
 - The 3D drag test uses `page.mouse` on the software-GL canvas and is reliable here on the desktop project; it is skipped on tablet and mobile (they default to the schematic). The touch test sends real touch events through the Chrome DevTools Protocol (Chromium, touch projects only).
 - Not run: GitHub Actions for this commit (see docs/12 or the final report). No real GPU, real touch device, screen reader or learner testing.
+## Live AI tutor (Vercel function) and tray fix (2026-11-16, macOS, Playwright 1.65.1)
+| Command | Result |
+|---|---|
+| `npx tsc -b` | clean |
+| `npm run typecheck:e2e` | clean |
+| `npm run lint` | clean |
+| `npm run test:run` | 41 files, 396 tests passed (371 before; new: `server/tutor/handler.test.ts` 17 tests and `bundle.test.ts` 2 tests, `ComponentTray.test.tsx` 1, two bench-placement tests in `labStore.test.ts`, two tests in `remoteTutor.test.ts`, one in `TutorPanel.test.tsx`) |
+| `npm run build` | passes (includes `npm run build:api`); main 262.39 kB, gzip 79.65 (was 262.06); MissionView 58.18 kB (was 57.95); LabScene 938.96 kB unchanged; CSS 26.46 kB unchanged; `api/hint.js` 83.7 kB (server only, not in `dist`) |
+| `caffeinate -i npm run e2e:ci` | 111 passed, 24 skipped, 0 failed, 0 flaky (93 passed, 24 skipped before; +6 tests x 3 projects in `e2e/ai-tutor.spec.ts`; 135 = 45 tests x 3 projects) |
+| `pytest` in `services/tutor` (fresh venv under /tmp from `requirements-dev.txt`) | 19 passed (service unchanged) |
+- **Handler tests (mocked `fetch`, no network):** documented request shape and reply parsing for all four providers; 503 when key, provider or model is missing or the provider is unknown; 405; 413 (declared and streamed); 422 (bad JSON, bad schema, extra fields, over-long question); 422 for unsafe, injection and off-topic questions with the provider never called; 403 for a foreign Origin; preflight; 429 with `Retry-After` and recovery; 504 on timeout; 502 for an upstream error, an unusable body, a reply with an invented number and a reply with a web address; no `console` calls. The bundle test checks the committed `api/hint.js` equals a fresh bundle and loads it in plain Node ESM.
+- **Secrets in the bundle:** `grep -rF` over `dist` (built in remote mode) for `TUTOR_API_KEY`, `sk-`, `api.openai.com`, `api.anthropic.com`, `generativelanguage`, `openrouter`, `TUTOR_PROVIDER`, `TUTOR_MODEL`, `x-api-key`, `x-goog-api-key`: 0 files each. A build with `TUTOR_API_KEY=fake-secret-zzz999` in the environment: the fake value is not in `dist` (only the mode word `remote` is embedded).
+- **CSP:** `connect-src 'self'` served by `vercel.json` (and by `vite preview` through `vite.config.ts`); E2E checks the header and opens the 3D view and fonts on all three projects with the console guard on.
+- **Flake seen once:** on the first full run, desktop `move-parts.spec.ts` "hover cursor, port and switch clicks..." failed its first attempt (cursor poll timed out) and passed on retry; the final full run had 0 flaky. Not investigated further. The first full run also showed my new CSP test failing on mobile (it expected a canvas, but small screens open on the schematic); fixed by selecting the 3D view.
+- **Not run / not verified:** no real provider call (no key); the function was not run under `vercel dev`; no real GPU, touch device or screen reader.

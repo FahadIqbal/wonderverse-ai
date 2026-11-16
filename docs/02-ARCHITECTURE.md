@@ -10,7 +10,8 @@ React/Vite/TypeScript UI
  ├─ Tutor orchestration (structured grounding and fallback)
  └─ State: Zustand + versioned localStorage
          |
-         +-- optional FastAPI tutor gateway -- approved model API
+         +-- same-origin Vercel function /api/hint -- provider API (OpenAI, Anthropic, Gemini, OpenRouter)
+         +-- optional FastAPI tutor gateway (secondary, services/tutor)
 ```
 
 ## Recommended stack

@@ -9,6 +9,10 @@ export const CONSOLE_ALLOWLIST: { pattern: RegExp; why: string }[] = [
   { pattern: /Automatic fallback to software WebGL has been deprecated/, why: 'Chrome notice when GL runs on SwiftShader' },
   { pattern: /THREE\.Clock: This module has been deprecated/, why: 'three.js deprecation raised inside @react-three/fiber 8' },
   { pattern: /WebGL context was lost\./, why: 'Firefox notice logged when three.js disposes a renderer on unmount (seen only in the opt-in Firefox project)' },
+  {
+    pattern: /Failed to load resource: the server responded with a status of 503/,
+    why: 'Chrome logs every 503 network response. The default /api/hint route below answers 503 on purpose, like a deployment with no tutor key; the tutor must fall back to the Local guide',
+  },
   { pattern: /WEBGL_lose_context extension not supported/, why: 'three.js warning when a lost context is disposed' },
 ]
 
@@ -26,7 +30,21 @@ function isAllowed(text: string): boolean {
  * console errors, warnings and uncaught page errors, and fails the test at the end if any are not allowlisted.
  * A test that expects a message calls `expectConsole(/pattern/)` first.
  */
-export const test = base.extend<{ consoleGuard: { expectConsole: (p: RegExp) => void } }>({
+export const test = base.extend<{ consoleGuard: { expectConsole: (p: RegExp) => void }; tutorEndpoint: void }>({
+  /**
+   * The E2E build runs in tutor `remote` mode, so the browser posts to /api/hint. `vite preview` has no function, so by
+   * default that route answers what a deployment without a key answers: 503 tutor_unavailable. Tests that want an AI
+   * reply register their own page.route for the same URL, and the later route takes precedence over this default.
+   */
+  tutorEndpoint: [
+    async ({ page }, use) => {
+      await page.route('**/api/hint', route =>
+        route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: 'tutor_unavailable' }) }),
+      )
+      await use()
+    },
+    { auto: true },
+  ],
   consoleGuard: [
     async ({ page }, use) => {
       const problems: ConsoleProblem[] = []

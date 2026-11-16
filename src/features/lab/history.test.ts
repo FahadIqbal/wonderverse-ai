@@ -39,10 +39,12 @@ describe('labStore undo / redo / reset', () => {
     expect(lab().graph.components.find(c => c.id === 'switch-1')?.isOn).toBe(false)
   })
   it(`keeps at most ${HISTORY_LIMIT} undo steps and drops the oldest`, () => {
-    for (let i = 0; i < HISTORY_LIMIT + 10; i++) lab().addComponent('lamp')
+    lab().addComponent('switch')
+    for (let i = 0; i < HISTORY_LIMIT + 9; i++) lab().toggleSwitch('switch-1')
     expect(lab().past).toHaveLength(HISTORY_LIMIT)
     for (let i = 0; i < HISTORY_LIMIT + 5; i++) lab().undo()
-    expect(count()).toBe(10) // the 10 oldest edits can no longer be undone
+    expect(count()).toBe(1) // the 10 oldest edits (the add and 9 toggles) can no longer be undone
+    expect(lab().graph.components[0].isOn).toBe(true)
     expect(lab().past).toHaveLength(0)
   })
   it('loadGraph replaces the circuit without history and sets the reset baseline', () => {

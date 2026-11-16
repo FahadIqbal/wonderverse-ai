@@ -81,6 +81,23 @@ export function planMove(graph: CircuitGraph, componentId: string, target: Posit
   return { ok: true, position, clamped }
 }
 
+/**
+ * A free, in-bounds, grid-aligned spot for a new part, or undefined when the bench is full. Tries `preferred` spots
+ * first (in order, clamped and snapped), then scans the bench row by row, so the result never needs a later move
+ * to get back on the bench.
+ */
+export function findFreeCell(graph: CircuitGraph, preferred: readonly Position[] = []): Position | undefined {
+  for (const target of preferred) {
+    const p = snapToGrid(clampToBench(target))
+    if (p.x === target.x && p.y === target.y && isCellFree(graph, '', p)) return p
+  }
+  for (let y = BENCH_BOUNDS.minY; y <= BENCH_BOUNDS.maxY; y += GRID) {
+    for (let x = BENCH_BOUNDS.minX; x <= BENCH_BOUNDS.maxX; x += GRID) {
+      if (isCellFree(graph, '', { x, y })) return { x, y }
+    }
+  }
+  return undefined
+}
 /** Moves a component (and its terminals) so its centre is exactly `position`. No clamping: use planMove first. */
 export function placeAt(c: CircuitComponent, position: Position): CircuitComponent {
   const from = terminalCenter(c)
