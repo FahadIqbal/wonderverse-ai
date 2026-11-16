@@ -54,10 +54,10 @@ Hands-on science is hard to set up and hard to personalize. We wanted a place wh
 Scope: one macOS machine, Node 26.13.1, Playwright 1.65.1, Chrome and bundled Chromium, software WebGL (SwiftShader), Playwright **emulation** for tablet and phone sizes. Dates are 2026-11-15 and 2026-11-16.
 - `npm run test:run`: **396 unit and property tests passed**, in 41 files.
 - `npm run e2e:ci` (bundled Chromium): **111 passed, 24 skipped, 0 failed** (135 = 45 tests x 3 projects). The skips are by design (tests that apply to one device class only).
-- The same E2E suite against the live URL (`E2E_BASE_URL=https://wonderverse-ai.vercel.app`): `[TODO: fill from docs/18 after the final deploy]`.
+- The same E2E suite against the live URL (`E2E_BASE_URL=https://wonderverse-ai.vercel.app`): 98 passed, 36 skipped, 0 failed, 1 flaky (passed on retry) on the build with the AI tutor function but no key configured (docs/18)..
 - `pytest` for the tutor gateway: 19 passed.
 - `tsc -b` and `npm run lint`: clean in that run.
-- GitHub Actions CI (web, e2e, tutor jobs): success on 1e7544b (run 43734538913, read through the public API). `[TODO: confirm on the Actions tab for the final commit]`
+- GitHub Actions CI (web, e2e, tutor jobs): success on 190c2c3 (run 43881373698, read through the public API). `[TODO: confirm on the Actions tab for the final commit]`
 - axe-core checks on portal, map, erase dialog and mission screens, run in real Chrome, with a console-error guard on every E2E test.
 
 ## What we learned
