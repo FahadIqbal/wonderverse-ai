@@ -1,10 +1,12 @@
 import { useRef } from 'react'
-import type { Mission } from '../../domain/learning'
+import { describeCounts, type Mission, type MissionRecap } from '../../domain/learning'
 import { ModalShell } from '../../ui/ModalShell'
 import { primaryButton, secondaryButton } from '../../ui/styles'
 
 interface Props {
   mission: Mission
+  /** Facts captured when the mission was completed (or read from the live bench for older saves). */
+  recap: MissionRecap
   onClose: () => void
   onReplay: () => void
   onBackToMap: () => void
@@ -13,7 +15,7 @@ interface Props {
 }
 
 /** Modal dialog (see ModalShell): focus moves to the heading on open, Tab is trapped, Escape closes, the page is inert. */
-export function CompletionDialog({ mission, onClose, onReplay, onBackToMap, next }: Props) {
+export function CompletionDialog({ mission, recap, onClose, onReplay, onBackToMap, next }: Props) {
   const headingRef = useRef<HTMLHeadingElement>(null)
   return (
     <ModalShell
@@ -28,9 +30,39 @@ export function CompletionDialog({ mission, onClose, onReplay, onBackToMap, next
         Mission complete: {mission.title}
       </h2>
       <dl id="completion-recap" className="space-y-2 text-sm">
-        <div><dt className="inline font-semibold text-observatory-aqua">You built: </dt><dd className="inline">{mission.recap.built}</dd></div>
-        <div><dt className="inline font-semibold text-observatory-aqua">You observed: </dt><dd className="inline">{mission.recap.observed}</dd></div>
-        <div><dt className="inline font-semibold text-observatory-aqua">You explained: </dt><dd className="inline">{mission.recap.explained}</dd></div>
+        <div>
+          <dt className="inline font-semibold text-observatory-aqua">You built: </dt>
+          <dd className="inline">
+            {mission.recap.built} <span data-testid="recap-counts">On your bench: {describeCounts(recap)}.</span>
+          </dd>
+        </div>
+        <div>
+          <dt className="inline font-semibold text-observatory-aqua">You observed: </dt>
+          <dd className="inline">
+            {mission.recap.observed}
+            {recap.readings.length > 0 && (
+              <ul aria-label="Measured at completion, from the simulation report" data-testid="recap-readings" className="mt-1 list-disc pl-5">
+              {recap.readings.map(r => (
+                <li key={r.label}>
+                  {r.label}: {r.voltage.toFixed(2)} V across, {(r.current * 1000).toFixed(1)} mA through ({r.energized ? 'energized' : 'idle'})
+                </li>
+              ))}
+              </ul>
+            )}
+          </dd>
+        </div>
+        <div>
+          <dt className="inline font-semibold text-observatory-aqua">You explained: </dt>
+          <dd className="inline">{mission.recap.explained}</dd>
+        </div>
+        <div>
+          <dt className="inline font-semibold text-observatory-aqua">Idea you tested: </dt>
+          <dd className="inline" data-testid="recap-misconception">{mission.quiz.misconception}</dd>
+        </div>
+        <div>
+          <dt className="inline font-semibold text-observatory-aqua">Hints used: </dt>
+          <dd className="inline" data-testid="recap-hints">{recap.hintsUsed} of {mission.hints.length}</dd>
+        </div>
         <div><dt className="inline font-semibold text-observatory-aqua">Try next: </dt><dd className="inline">{mission.recap.tryNext}</dd></div>
       </dl>
       <div className="mt-5 flex flex-wrap gap-3">

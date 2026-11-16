@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { solveCircuit } from '../../domain/circuit'
+import { nextStep } from '../../domain/learning'
 import { useLabStore } from '../lab/labStore'
 import { useRecentlyAdded } from '../lab/useFeedbackMotion'
 import { useMotionPreference } from '../lab/useMotionPreference'
@@ -16,6 +17,10 @@ export function MissionHUD() {
   const report = useMemo(() => solveCircuit(graph), [graph])
   const evaluation = useMemo(() => evaluate(state, { mission, graph, report }), [state, mission, graph, report])
 
+  const step = useMemo(
+    () => nextStep(report, graph, { phase: state.phase, missionId: mission.id, achieved: state.achieved, lastAnswer: state.lastAnswer }),
+    [report, graph, state.phase, state.achieved, state.lastAnswer, mission.id],
+  )
   const { calm } = useMotionPreference()
   const justDone = useRecentlyAdded(state.achieved, 3)
   const lastTitle = mission.objectives.find(o => o.id === state.lastAchieved)?.title
@@ -42,6 +47,11 @@ export function MissionHUD() {
           )
         })}
       </ul>
+      <div className="mt-3 rounded-md border border-observatory-gold/50 bg-observatory-gold/10 p-2" data-testid="next-step" data-step={step.id}>
+        <h3 className="text-sm font-semibold text-observatory-gold">Next step</h3>
+        <p className="text-sm text-slate-100">{step.text}</p>
+        <p className="mt-1 text-xs text-slate-400">Worked out from the simulation report.</p>
+      </div>
       <p role="status" aria-live="polite" data-testid="objective-announcement" className="mt-3 min-h-[1.5rem] text-sm text-observatory-aqua">
         {lastTitle ? `Objective complete: ${lastTitle}` : ''}
       </p>

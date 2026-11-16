@@ -138,6 +138,7 @@ export function SchematicCanvas({ graph, report }: Props) {
     <div
       className={`overflow-x-auto rounded-2xl border border-observatory-navy-lighter bg-observatory-navy shadow-[inset_0_0_40px_rgba(84,229,211,0.04)] ${shaking ? 'reject-shake' : ''}`}
       data-testid="schematic-stage"
+      data-tour="ports"
       data-rejected={String(shaking)}
     >
     <svg

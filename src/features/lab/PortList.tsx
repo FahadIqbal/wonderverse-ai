@@ -13,7 +13,7 @@ export function PortList({ report }: { report: SimulationReport }) {
   const toggleSwitch = useLabStore(s => s.toggleSwitch)
 
   return (
-    <section aria-labelledby="ports-heading" className={panel}>
+    <section aria-labelledby="ports-heading" className={panel} data-tour="ports">
       <h2 id="ports-heading" className={panelHeading}>
         Components and ports
       </h2>

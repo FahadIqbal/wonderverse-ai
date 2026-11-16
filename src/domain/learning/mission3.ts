@@ -77,6 +77,7 @@ export const mission3 = Mission.parse({
     id: 'quiz-branches',
     prompt: 'One switch is open and its lamp is dark, but the other lamp is still lit. Why?',
     correctOptionId: 'separate-branches',
+    misconception: 'The battery sends all its electricity to one lamp. In the model, each closed branch gets the battery voltage.',
     options: [
       {
         id: 'single-loop',

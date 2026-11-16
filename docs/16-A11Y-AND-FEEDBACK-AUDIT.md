@@ -31,10 +31,15 @@ Scope: every interactive control in `src/`. "Status" is the state after T11. Che
 | Tutor input and Ask | disabled while loading, after completion, at the hint cap; reason text now also covers "not started" and "complete" | `aria-busy`, "Nova is looking...", error text, "offline hint" label | Tab, Enter | Fixed (reason text, 44px) |
 | Lab feedback line (`FeedbackBar`) | n/a | one `role=status` line in both views; errors add an alert icon, a coral border and the words "Connection rejected" (not colour only); shake only when motion is allowed | n/a | Restyled (visual polish pass) |
 | Mission map progress bar | n/a | `role=progressbar` with value text "N of 3 missions complete", same text shown above it | n/a | New |
+| How to play (button) | never disabled | opens the tour at step 1 | Tab, Enter; focus returns here when the tour closes | New |
+| Tour: Back / Next / Done / Skip tour | Back disabled on step 1; Skip hidden on the last step | step text in a polite live region; "step N of 4" text; the described region gets an outline | Tab, Enter; Escape skips; focus starts on the step heading | New |
+| Next step box (HUD) | n/a | plain text from the simulation report, no live region (Circuit announcer and objective status already speak) | readable in order with the objectives | New |
+| Meter: part select | disabled until a part exists ("Add a part first") | readout is `role=status` `aria-live=polite`; a removed part resets to the prompt; idle parts say why the numbers are zero | native select: arrows, Enter | New |
+| Recap (completion dialog) | n/a | built / measured / hints / idea tested / try next as a definition list; readings list inside the `dd` (axe `definition-list`) | same dialog behaviour as before | Extended |
 | Whole app crash | n/a | `AppErrorBoundary`: "Something went wrong", Try again, Reload | focus moves to the message | New |
 
 ## Checks and what they cover
-- axe-core 4 (WCAG 2.0/2.1 A and AA plus best-practice) on portal, map, mission briefing, schematic workbench, 3D workbench DOM (canvas stubbed), the reset and erase dialogs and the recap dialog: no violations (`src/app/a11y.test.tsx`).
+- axe-core 4 (WCAG 2.0/2.1 A and AA plus best-practice) on the first-visit tour, the next-step box and a placed meter (jsdom `a11y.test.tsx`, and real Chrome in `e2e/learning-ux.spec.ts` including the recap dialog), and on portal, map, mission briefing, schematic workbench, 3D workbench DOM (canvas stubbed), the reset and erase dialogs and the recap dialog: no violations (`src/app/a11y.test.tsx`).
 - The same axe rules with colour contrast on in real Chrome on portal, map, the 3D mission view and the reset dialog: no violations after the fix above.
 - Contrast ratios are computed from the palette in `src/ui/palette.test.ts` (text on navy, surface, raised and error backgrounds all at least 4.5:1; focus ring and field border at least 3:1).
 - Dialog focus, inertness and focus restore: `src/ui/ModalShell.test.tsx` and the existing mission-flow tests.

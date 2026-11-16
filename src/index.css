@@ -228,3 +228,8 @@ html[data-motion='calm'] *::after {
     color: GrayText;
   }
 }
+/* The region the onboarding tour is describing. An outline, not colour alone, and it is not animated. */
+[data-tour-active='true'] {
+  outline: 3px solid var(--color-gold);
+  outline-offset: 3px;
+}

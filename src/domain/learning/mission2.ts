@@ -78,6 +78,7 @@ export const mission2 = Mission.parse({
     id: 'quiz-diagnosis',
     prompt: 'What was wrong with the circuit at the start?',
     correctOptionId: 'missing-return',
+    misconception: 'A dark lamp means the battery has run out. In the model, the battery is unchanged and the path was incomplete.',
     options: [
       {
         id: 'more-colors',

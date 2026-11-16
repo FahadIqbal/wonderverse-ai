@@ -8,7 +8,8 @@ import { useSessionStatus } from '../features/session/sessionStore'
 /** Returns every store to a first-visit state and clears browser storage. For tests only. */
 export function resetStores() {
   window.localStorage.clear()
-  useSettingsStore.setState({ lowPower: false })
+  // The first-visit tour is covered by its own tests; every other test starts as a returning learner.
+  useSettingsStore.setState({ lowPower: false, tourSeen: true })
   useMissionStore.getState().hydrate(createFreshSession())
   useLabStore.setState({ graph: createEmptyGraph(), past: [], future: [], baseline: null, pendingTerminalId: null, feedback: null })
   useSessionStatus.setState({ loadOutcome: 'empty', storage: 'ok', eraseResult: 'none' })

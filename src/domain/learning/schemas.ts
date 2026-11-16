@@ -44,6 +44,8 @@ export const Quiz = z.object({
   prompt: z.string().min(1),
   options: z.array(QuizOption).min(2),
   correctOptionId: z.string().min(1),
+  /** The common wrong idea this question addresses, shown in the recap. Plain words, no claim about the learner. */
+  misconception: z.string().min(1),
 })
 export type Quiz = z.infer<typeof Quiz>
 

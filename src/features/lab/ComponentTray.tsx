@@ -25,7 +25,7 @@ export function ComponentTray() {
   const isEmpty = useLabStore(s => s.graph.components.length === 0)
 
   return (
-    <section aria-labelledby="tray-heading" className={panel}>
+    <section aria-labelledby="tray-heading" className={panel} data-tour="tray">
       <h2 id="tray-heading" className={panelHeading}>
         Component tray
       </h2>

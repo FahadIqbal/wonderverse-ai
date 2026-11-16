@@ -81,6 +81,7 @@ export const mission1 = Mission.parse({
     id: 'quiz-switch-off',
     prompt: 'Why did opening the switch turn off the lamp?',
     correctOptionId: 'interrupted-path',
+    misconception: 'Opening a switch uses up the electricity. In the model, the battery is unchanged and only the path is broken.',
     options: [
       {
         id: 'used-all',

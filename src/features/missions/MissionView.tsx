@@ -4,8 +4,12 @@ import { panel, primaryButton, secondaryButton } from '../../ui/styles'
 import { CompletionDialog } from './CompletionDialog'
 import { MissionHUD } from './MissionHUD'
 import { QuizPanel } from './QuizPanel'
+import { OnboardingTour } from '../onboarding/OnboardingTour'
+import { useSettingsStore } from '../lab/settingsStore'
 import { TutorPanel } from '../tutor/TutorPanel'
-import { missionIndex, nextMission } from '../../domain/learning'
+import { solveCircuit } from '../../domain/circuit'
+import { buildRecap, missionIndex, nextMission } from '../../domain/learning'
+import { useLabStore } from '../lab/labStore'
 import { canFinish, unmetObjectiveTitles } from './missionMachine'
 import { useMissionBridge, useMissionStore } from './missionStore'
 
@@ -17,7 +21,13 @@ export function MissionView({ onBackToMap }: { onBackToMap?: () => void } = {}) 
   const startMission = useMissionStore(s => s.startMission)
   const restartMission = useMissionStore(s => s.restartMission)
   const selectMission = useMissionStore(s => s.selectMission)
+  const savedRecap = useMissionStore(s => s.recaps[s.mission.id])
+  const graph = useLabStore(s => s.graph)
   const [dismissed, setDismissed] = useState(false)
+  const tourSeen = useSettingsStore(s => s.tourSeen)
+  const setTourSeen = useSettingsStore(s => s.setTourSeen)
+  const [tourReopened, setTourReopened] = useState(false)
+  const howToPlay = useRef<HTMLButtonElement>(null)
   const recapButton = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
@@ -44,9 +54,22 @@ export function MissionView({ onBackToMap }: { onBackToMap?: () => void } = {}) 
   const finishable = canFinish(state, mission)
   const blockers = unmetObjectiveTitles(state, mission)
   const complete = state.phase === 'complete'
-
+  // First visit: the tour opens once the mission is under way (its targets exist then). "How to play" reopens it.
+  const showTour = tourReopened || (!tourSeen && !complete)
+  const closeTour = () => {
+    setTourReopened(false)
+    setTourSeen(true)
+    // The tour's buttons disappear, so hand focus to the control that reopens it.
+    queueMicrotask(() => howToPlay.current?.focus())
+  }
   return (
     <div className="flex flex-col gap-4">
+      {showTour && <OnboardingTour onClose={closeTour} />}
+      <div className="flex justify-end">
+        <button type="button" ref={howToPlay} className={secondaryButton} onClick={() => setTourReopened(true)}>
+          How to play
+        </button>
+      </div>
       <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         {/* The lab comes first in the DOM and on screen: it is the main activity. */}
         <LabWorkbench />
@@ -91,6 +114,7 @@ export function MissionView({ onBackToMap }: { onBackToMap?: () => void } = {}) 
       {complete && !dismissed && (
         <CompletionDialog
           mission={mission}
+          recap={savedRecap ?? buildRecap(graph, solveCircuit(graph), state.hintsShown)}
           onClose={() => setDismissed(true)}
           onReplay={() => {
             setDismissed(false)

@@ -6,6 +6,7 @@ import { HistoryControls } from './HistoryControls'
 import { CircuitDiagnostic } from './CircuitDiagnostic'
 import { ComponentTray } from './ComponentTray'
 import { SceneErrorBoundary } from './SceneErrorBoundary'
+import { MeterPanel } from './MeterPanel'
 import { PortList } from './PortList'
 import { SchematicEditor } from './SchematicEditor'
 import { useSettingsStore } from './settingsStore'
@@ -204,6 +205,7 @@ export function LabWorkbench() {
       ) : (
         <SchematicEditor />
       )}
+      <MeterPanel />
     </section>
   )
 }

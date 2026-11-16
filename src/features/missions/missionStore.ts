@@ -8,7 +8,9 @@ import {
   getMission,
   isMissionUnlocked,
   mission1,
+  buildRecap,
   type Mission,
+  type MissionRecap,
   type Session,
 } from '../../domain/learning'
 import { useLabStore } from '../lab/labStore'
@@ -27,6 +29,8 @@ interface MissionStore {
   completed: string[]
   /** Saved progress of missions other than the live one (the live one is read from `state` and the lab). */
   saved: Record<string, SavedMission>
+  /** What was built and measured when each mission was completed. Kept after a replay until the next completion. */
+  recaps: Record<string, MissionRecap>
   send: (input: MissionInput) => void
   /** Loads the setup graph into the lab, then starts the mission. */
   startMission: () => void
@@ -35,7 +39,7 @@ interface MissionStore {
   /** Makes an unlocked mission the live one, saving the current one first. Returns false if it is locked. */
   selectMission: (id: string) => boolean
   /** Replaces all progress from a validated session (the first mission becomes live). */
-  hydrate: (session: Pick<Session, 'completed' | 'missions'>) => void
+  hydrate: (session: Pick<Session, 'completed' | 'missions' | 'recaps'>) => void
   /** Back to a first-visit state. Used by Erase my progress. */
   resetAll: () => void
 }
@@ -69,13 +73,18 @@ export const useMissionStore = create<MissionStore>((set, get) => ({
   state: initialMissionState,
   completed: [],
   saved: {},
+  recaps: {},
   send: input => {
     const { mission, state, completed } = get()
     const graph = useLabStore.getState().graph
     const next = missionReducer(state, input, { mission, graph, report: solveCircuit(graph) })
     if (next === state) return
     const justCompleted = next.phase === 'complete' && state.phase !== 'complete'
-    set({ state: next, ...(justCompleted && !completed.includes(mission.id) ? { completed: [...completed, mission.id] } : {}) })
+    set({
+      state: next,
+      ...(justCompleted && !completed.includes(mission.id) ? { completed: [...completed, mission.id] } : {}),
+      ...(justCompleted ? { recaps: { ...get().recaps, [mission.id]: buildRecap(graph, solveCircuit(graph), next.hintsShown) } } : {}),
+    })
   },
   startMission: () => {
     const { mission, state, send } = get()
@@ -119,6 +128,7 @@ export const useMissionStore = create<MissionStore>((set, get) => ({
         state: entry?.state ?? initialMissionState,
         completed: [...session.completed],
         saved: { ...session.missions },
+        recaps: { ...session.recaps },
       })
     })
   },

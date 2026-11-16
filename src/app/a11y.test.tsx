@@ -13,6 +13,7 @@ import { AppShell } from './AppShell'
 import { resetStores, completeMissionHeadless } from '../test/helpers'
 import { useMissionStore } from '../features/missions/missionStore'
 import { useLabStore } from '../features/lab/labStore'
+import { useSettingsStore } from '../features/lab/settingsStore'
 
 /**
  * Automated WCAG 2.x A/AA rules from axe-core on the real screens. jsdom has no layout engine, so colour
@@ -64,6 +65,19 @@ describe('automated accessibility audit (axe-core)', () => {
     expect(await violations()).toEqual([])
   })
 
+  it('the first-visit tour, the next-step box and a placed meter', async () => {
+    const user = userEvent.setup()
+    useSettingsStore.setState({ tourSeen: false })
+    render(<AppShell />)
+    await user.click(screen.getByRole('button', { name: 'Enter the Lab' }))
+    await user.click(screen.getByRole('button', { name: /Start Mission 1/ }))
+    await user.click(await screen.findByRole('button', { name: 'Start mission' }))
+    expect(screen.getByTestId('onboarding-tour')).toBeInTheDocument()
+    expect(await violations()).toEqual([])
+    await user.click(screen.getByRole('button', { name: 'Skip tour' }))
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Place the meter on a part' }), 'Lamp 1')
+    expect(await violations()).toEqual([])
+  })
   it('the 3D workbench DOM (tray, port list, diagnostic) with the canvas stubbed', async () => {
     mocks.webgl = true
     const user = userEvent.setup()

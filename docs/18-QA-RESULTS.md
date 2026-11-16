@@ -159,3 +159,14 @@ Scope: live-URL screenshot recapture, 3D lamp pulse, consistency audit of README
 | CSS | 25.55 / 5.83 | 25.55 / 5.83 |
 
 First-load JS on the portal (Playwright, response bodies, uncompressed): 293.5 -> 251.2 kB. Local `vite preview` only; no live-site measurement and no throttled-network timing.
+## Learning UX pass (2026-11-16, macOS, Node v26.13.1, Playwright 1.65.1)
+| Command | Result |
+|---|---|
+| `npx tsc -b` | clean |
+| `npm run typecheck:e2e` | clean |
+| `npm run lint` | clean |
+| `npm run test:run` | 36 files, 331 tests passed (284 before this slice and the bundle pass; new: `nextStep` fixtures per status, reason and phase plus a 500-run property, `recap`, `meter`, session v1 -> v2 migration, `MeterPanel`, tour, HUD next step, recap dialog, axe on the tour and meter) |
+| `npm run build` | passes; main 259.56 kB (was 257.22), MissionView 55.40 kB (was 44.18), LabScene 936.32 kB unchanged |
+| `caffeinate -i npm run e2e:ci` | 83 passed, 19 skipped, 0 failed (74 before; +3 tests x 3 projects in `e2e/learning-ux.spec.ts`: tour skip and reopen, next-step text and meter in both views, recap content and reload) |
+- No existing E2E test was edited. The tour card is not modal, so flows that press Start mission still work with it open.
+- Not run: GitHub Actions result for this commit is recorded in docs/12 or the final report, not here. Everything above is Playwright emulation on software GL; no screen reader, real device or learner testing.

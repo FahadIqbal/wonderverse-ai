@@ -11,8 +11,9 @@ export function buildSession(): Session {
   return {
     schemaVersion: SESSION_SCHEMA_VERSION,
     completed: [...ms.completed],
-    settings: { lowPower: useSettingsStore.getState().lowPower },
+    settings: { lowPower: useSettingsStore.getState().lowPower, tourSeen: useSettingsStore.getState().tourSeen },
     missions: snapshotMissions(ms, useLabStore.getState().graph),
+    recaps: { ...ms.recaps },
   }
 }
 export function persistNow(): void {
@@ -30,6 +31,7 @@ export function startSessionPersistence(): () => void {
   suspended = true
   try {
     useSettingsStore.getState().setLowPower(session.settings.lowPower)
+    useSettingsStore.getState().setTourSeen(session.settings.tourSeen)
     useMissionStore.getState().hydrate(session)
   } finally {
     suspended = false
@@ -44,6 +46,7 @@ export function eraseAllProgress(): boolean {
   try {
     const cleared = eraseAllStoredData()
     useSettingsStore.getState().setLowPower(false)
+    useSettingsStore.getState().setTourSeen(false)
     useMissionStore.getState().hydrate(createFreshSession())
     useSessionStatus.setState({ loadOutcome: 'empty', storage: 'ok', eraseResult: cleared ? 'done' : 'failed' })
     return cleared

@@ -10,7 +10,7 @@ const fmt = (n: number, digits = 2) => n.toFixed(digits)
 
 export function CircuitDiagnostic({ graph, report }: Props) {
   return (
-    <section aria-labelledby="diagnostic-heading" className={panel}>
+    <section aria-labelledby="diagnostic-heading" className={panel} data-tour="diagnostic">
       <h2 id="diagnostic-heading" className={panelHeading}>
         Circuit diagnostic
       </h2>

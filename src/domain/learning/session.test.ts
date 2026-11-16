@@ -1,12 +1,20 @@
 import fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
-import { createFreshSession, isPristine, MAX_SESSION_BYTES, parseSession, serializeSession, SESSION_KEY, type Session } from './session'
+import { createFreshSession, isPristine, SESSION_SCHEMA_VERSION, MAX_SESSION_BYTES, parseSession, serializeSession, SESSION_KEY, type Session } from './session'
 import { mission2 } from './mission2'
 function sampleSession(): Session {
   return {
     ...createFreshSession(),
     completed: ['mission-1'],
-    settings: { lowPower: true },
+    settings: { lowPower: true, tourSeen: true },
+    recaps: {
+      'mission-1': {
+        counts: { battery: 1, switch: 1, lamp: 1 },
+        wires: 3,
+        readings: [{ label: 'Lamp 1', voltage: 3, current: 0.5, energized: true }],
+        hintsUsed: 1,
+      },
+    },
     missions: {
       'mission-2': {
         state: {
@@ -43,7 +51,7 @@ describe('session persistence schema', () => {
   })
   it('stores no personal fields', () => {
     const keys = JSON.stringify(Object.keys(JSON.parse(serializeSession(sampleSession()))))
-    expect(keys).toBe('["schemaVersion","completed","settings","missions"]')
+    expect(keys).toBe('["schemaVersion","completed","settings","missions","recaps"]')
   })
   it('treats missing data as an empty fresh session', () => {
     const out = parseSession(null)
@@ -60,9 +68,43 @@ describe('session persistence schema', () => {
     },
   )
   it('falls back for an unknown or future schema version, and for a non-numeric version', () => {
-    expect(parseSession(JSON.stringify({ ...sampleSession(), schemaVersion: 2 })).outcome).toBe('unsupported-version')
+    expect(parseSession(JSON.stringify({ ...sampleSession(), schemaVersion: 3 })).outcome).toBe('unsupported-version')
     expect(parseSession(JSON.stringify({ ...sampleSession(), schemaVersion: 0 })).outcome).toBe('unsupported-version')
     expect(parseSession(JSON.stringify({ ...sampleSession(), schemaVersion: '1' })).outcome).toBe('corrupt')
+  })
+  describe('v1 -> v2 migration', () => {
+    const v1 = (over: Record<string, unknown> = {}) =>
+      JSON.stringify({ schemaVersion: 1, completed: [], settings: { lowPower: false }, missions: {}, ...over })
+    it('keeps progress and settings, adds empty recaps, and marks the tour seen for a learner with progress', () => {
+      const missions = JSON.parse(serializeSession(sampleSession())).missions
+      const out = parseSession(v1({ completed: ['mission-1'], settings: { lowPower: true }, missions }))
+      expect(out.outcome).toBe('restored')
+      expect(out.session.schemaVersion).toBe(SESSION_SCHEMA_VERSION)
+      expect(out.session.completed).toEqual(['mission-1'])
+      expect(out.session.settings).toEqual({ lowPower: true, tourSeen: true })
+      expect(Object.keys(out.session.missions)).toEqual(['mission-2'])
+      expect(out.session.recaps).toEqual({})
+    })
+    it('leaves the tour unseen for a v1 session with no progress', () => {
+      const out = parseSession(v1({ settings: { lowPower: true } }))
+      expect(out.outcome).toBe('restored')
+      expect(out.session.settings).toEqual({ lowPower: true, tourSeen: false })
+    })
+    it('still treats malformed v1 data as corrupt', () => {
+      expect(parseSession(v1({ settings: { lowPower: 'yes' } })).outcome).toBe('corrupt')
+      expect(parseSession(v1({ completed: 'x' })).outcome).toBe('corrupt')
+    })
+  })
+  it('drops an invalid or unknown-mission recap but keeps the rest', () => {
+    const json = JSON.parse(serializeSession(sampleSession()))
+    json.recaps['mission-99'] = json.recaps['mission-1']
+    json.recaps['mission-2'] = { counts: 'x' }
+    const out = parseSession(JSON.stringify(json))
+    expect(Object.keys(out.session.recaps)).toEqual(['mission-1'])
+    expect(out.session.completed).toEqual(['mission-1'])
+  })
+  it('a session whose only content is the tour flag is not pristine, so it is saved', () => {
+    expect(isPristine({ ...createFreshSession(), settings: { lowPower: false, tourSeen: true } })).toBe(false)
   })
   it('rejects oversized payloads', () => {
     expect(parseSession('x'.repeat(MAX_SESSION_BYTES + 1)).outcome).toBe('corrupt')
@@ -101,7 +143,7 @@ describe('session persistence schema', () => {
     fc.assert(
       fc.property(fc.oneof(fc.string(), fc.json(), fc.jsonValue().map(v => JSON.stringify(v))), raw => {
         const out = parseSession(raw)
-        expect(out.session.schemaVersion).toBe(1)
+        expect(out.session.schemaVersion).toBe(SESSION_SCHEMA_VERSION)
         expect(Array.isArray(out.session.completed)).toBe(true)
       }),
       { numRuns: 200 },

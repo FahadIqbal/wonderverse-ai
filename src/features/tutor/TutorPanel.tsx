@@ -74,7 +74,7 @@ export function TutorPanel({ adapter, resolve = resolveHint }: TutorPanelProps) 
   const sourceLabel = result ? (result.source === 'remote' ? 'AI tutor' : 'Local guide') : null
 
   return (
-    <section aria-labelledby="tutor-heading" className={panel} data-testid="tutor-panel">
+    <section aria-labelledby="tutor-heading" className={panel} data-testid="tutor-panel" data-tour="tutor">
       <h2 id="tutor-heading" className="mb-2 text-lg font-semibold text-observatory-gold">
         Ask Nova
       </h2>
