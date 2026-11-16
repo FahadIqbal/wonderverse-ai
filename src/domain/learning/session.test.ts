@@ -2,6 +2,7 @@ import fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
 import { createFreshSession, isPristine, SESSION_SCHEMA_VERSION, MAX_SESSION_BYTES, parseSession, serializeSession, SESSION_KEY, type Session } from './session'
 import { mission2 } from './mission2'
+import { componentPosition, normalizeLayout } from '../circuit'
 function sampleSession(): Session {
   return {
     ...createFreshSession(),
@@ -29,7 +30,7 @@ function sampleSession(): Session {
           lastAnswer: { optionId: 'more-colors', correct: false },
           completions: 0,
         },
-        graph: mission2.setupGraph,
+        graph: normalizeLayout(mission2.setupGraph),
       },
     },
   }
@@ -68,7 +69,7 @@ describe('session persistence schema', () => {
     },
   )
   it('falls back for an unknown or future schema version, and for a non-numeric version', () => {
-    expect(parseSession(JSON.stringify({ ...sampleSession(), schemaVersion: 3 })).outcome).toBe('unsupported-version')
+    expect(parseSession(JSON.stringify({ ...sampleSession(), schemaVersion: 4 })).outcome).toBe('unsupported-version')
     expect(parseSession(JSON.stringify({ ...sampleSession(), schemaVersion: 0 })).outcome).toBe('unsupported-version')
     expect(parseSession(JSON.stringify({ ...sampleSession(), schemaVersion: '1' })).outcome).toBe('corrupt')
   })
@@ -93,6 +94,52 @@ describe('session persistence schema', () => {
     it('still treats malformed v1 data as corrupt', () => {
       expect(parseSession(v1({ settings: { lowPower: 'yes' } })).outcome).toBe('corrupt')
       expect(parseSession(v1({ completed: 'x' })).outcome).toBe('corrupt')
+    })
+  })
+  describe('v2 -> v3 migration', () => {
+    const v2 = () => {
+      const json = JSON.parse(serializeSession(sampleSession()))
+      json.schemaVersion = 2
+      for (const c of json.missions['mission-2'].graph.components) delete c.position
+      return json
+    }
+    it('keeps progress, settings and recaps, and gives each saved part a position at the centre of its terminals', () => {
+      const out = parseSession(JSON.stringify(v2()))
+      expect(out.outcome).toBe('restored')
+      expect(out.session.schemaVersion).toBe(3)
+      expect(out.session.completed).toEqual(['mission-1'])
+      expect(out.session.settings).toEqual({ lowPower: true, tourSeen: true })
+      expect(Object.keys(out.session.recaps)).toEqual(['mission-1'])
+      const saved = out.session.missions['mission-2'].graph
+      expect(saved.components.every(c => c.position !== undefined)).toBe(true)
+      const authored = mission2.setupGraph.components
+      saved.components.forEach((c, i) => expect(c.position).toEqual(componentPosition(authored[i])))
+      // Terminals, wires and everything the solver reads are untouched.
+      expect(saved.wires).toEqual(mission2.setupGraph.wires)
+      saved.components.forEach((c, i) => expect(c.terminals).toEqual(authored[i].terminals))
+    })
+    it('chains from v1', () => {
+      const out = parseSession(JSON.stringify({ schemaVersion: 1, completed: [], settings: { lowPower: false }, missions: JSON.parse(serializeSession(sampleSession())).missions }))
+      expect(out.outcome).toBe('restored')
+      expect(out.session.schemaVersion).toBe(3)
+      expect(out.session.missions['mission-2'].graph.components.every(c => c.position !== undefined)).toBe(true)
+    })
+    it('replaces a saved position that disagrees with the terminals, and drops a non-finite one', () => {
+      const json = v2()
+      json.schemaVersion = 3
+      json.missions['mission-2'].graph.components[0].position = { x: 9999, y: -5 }
+      const out = parseSession(JSON.stringify(json))
+      const first = out.session.missions['mission-2'].graph.components[0]
+      expect(first.position).toEqual(componentPosition({ ...first, position: undefined }))
+      const bad = v2()
+      bad.schemaVersion = 3
+      bad.missions['mission-2'].graph.components[0].position = { x: 'a', y: 1 }
+      expect(Object.keys(parseSession(JSON.stringify(bad)).session.missions)).toEqual([])
+    })
+    it('still treats malformed v2 data as corrupt', () => {
+      const json = v2()
+      json.completed = 'x'
+      expect(parseSession(JSON.stringify(json)).outcome).toBe('corrupt')
     })
   })
   it('drops an invalid or unknown-mission recap but keeps the rest', () => {

@@ -71,6 +71,7 @@ function Workbench3D({ onContextLost }: { onContextLost: () => void }) {
   const cancelConnection = useLabStore(s => s.cancelConnection)
   const selectTerminal = useLabStore(s => s.selectTerminal)
   const toggleSwitch = useLabStore(s => s.toggleSwitch)
+  const moveComponent = useLabStore(s => s.moveComponent)
   const lowPower = useSettingsStore(s => s.lowPower)
   const setLowPower = useSettingsStore(s => s.setLowPower)
   const motion = useMotionPreference()
@@ -113,12 +114,14 @@ function Workbench3D({ onContextLost }: { onContextLost: () => void }) {
               onContextLost={onContextLost}
               onSelectTerminal={selectTerminal}
               onToggleSwitch={toggleSwitch}
+              onMoveComponent={moveComponent}
             />
           </Suspense>
         </div>
         <figcaption className="mt-2 text-xs text-slate-400">
-          Drag to orbit, pinch or scroll to zoom. Click or tap a glowing port, then a second port, to connect them.
-          Click a switch to open or close it. Escape cancels. The same actions are in the list below.
+          Drag empty space to orbit, pinch or scroll to zoom. Drag a part to move it; it snaps to the grid and stays on
+          the bench. Click or tap a glowing port, then a second port, to connect them. Click a switch to open or close
+          it. Escape cancels. To move parts with the keyboard, use the Schematic view and the arrow keys.
         </figcaption>
       </figure>
       <ComponentTray />

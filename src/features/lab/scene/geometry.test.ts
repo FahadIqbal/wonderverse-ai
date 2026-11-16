@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import fc from 'fast-check'
 import { createEmptyGraph, circuitReducer, solveCircuit, CircuitFixtures } from '../../../domain/circuit'
 import { createComponent } from '../labStore'
-import { DEFAULT_CAMERA_DISTANCE, ORBIT_LIMITS, fitCameraDistance, BENCH_CENTER, PORT_HEIGHT, WIRE_ARC_LEVELS, WORLD_SCALE, lampGlow, placeComponent, placeGraph, terminalWorldPosition, toWorld, wireArcHeight, wireArcMid, wireEnergized, LAMP_PULSE_AMPLITUDE, lampPulseActive, lampPulseFactor, litLampCount, sceneFrameloop } from './geometry'
+import { DEFAULT_CAMERA_DISTANCE, ORBIT_LIMITS, fitCameraDistance, BENCH_CENTER, PORT_HEIGHT, WIRE_ARC_LEVELS, WORLD_SCALE, lampGlow, placeComponent, placeGraph, terminalWorldPosition, toWorld, wireArcHeight, wireArcMid, wireEnergized, LAMP_PULSE_AMPLITUDE, lampPulseActive, lampPulseFactor, litLampCount, sceneFrameloop, fromWorld, rayToBench } from './geometry'
 import type { CircuitGraph, ComponentType } from '../../../domain/circuit'
 
 function graphWith(types: ComponentType[]): CircuitGraph {
@@ -197,5 +197,43 @@ describe('lamp pulse decision (pure)', () => {
         expect(Math.abs(k - 1)).toBeLessThanOrEqual(LAMP_PULSE_AMPLITUDE + 1e-12)
       }),
     )
+  })
+})
+
+describe('bench pointer mapping', () => {
+  it('fromWorld inverts toWorld on the bench plane', () => {
+    fc.assert(
+      fc.property(fc.double({ min: -500, max: 1500, noNaN: true }), fc.double({ min: -500, max: 1500, noNaN: true }), (x, y) => {
+        const [wx, , wz] = toWorld({ x, y })
+        const back = fromWorld(wx, wz)
+        expect(back.x).toBeCloseTo(x, 6)
+        expect(back.y).toBeCloseTo(y, 6)
+      }),
+    )
+  })
+
+  it('a ray aimed at a bench point lands on that point, from any camera height and side', () => {
+    fc.assert(
+      fc.property(
+        fc.double({ min: 40, max: 620, noNaN: true }),
+        fc.double({ min: 0, max: 280, noNaN: true }),
+        fc.double({ min: -9, max: 9, noNaN: true }),
+        fc.double({ min: 2, max: 12, noNaN: true }),
+        fc.double({ min: -9, max: 9, noNaN: true }),
+        (x, y, ox, oy, oz) => {
+          const target = toWorld({ x, y })
+          const dir: [number, number, number] = [target[0] - ox, target[1] - oy, target[2] - oz]
+          const hit = rayToBench([ox, oy, oz], dir)
+          expect(hit).not.toBeNull()
+          expect(hit!.x).toBeCloseTo(x, 4)
+          expect(hit!.y).toBeCloseTo(y, 4)
+        },
+      ),
+    )
+  })
+
+  it('returns null for a ray parallel to the bench or pointing away from it', () => {
+    expect(rayToBench([0, 5, 0], [1, 0, 0])).toBeNull()
+    expect(rayToBench([0, 5, 0], [0, 1, 0])).toBeNull()
   })
 })

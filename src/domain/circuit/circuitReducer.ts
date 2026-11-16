@@ -5,6 +5,7 @@ import {
   TerminalId,
   CircuitComponent,
 } from './types'
+import { placeAt, planMove, terminalCenter } from './layout'
 
 /**
  * Validates whether a wire can be connected between two terminals
@@ -149,27 +150,22 @@ export function circuitReducer(graph: CircuitGraph, action: CircuitAction): Circ
     }
 
     case 'MOVE_COMPONENT': {
+      // `position` is the new absolute centre. It is clamped to the bench and snapped to the grid here, so no
+      // caller can place a part off the bench. A move onto another part, or to where the part already is, is a no-op.
+      const plan = planMove(graph, action.componentId, action.position)
+      if (!plan.ok) return graph
+      const current = graph.components.find(c => c.id === action.componentId)
+      if (!current) return graph
+      const from = terminalCenter(current)
+      if (from.x === plan.position.x && from.y === plan.position.y && current.position?.x === from.x && current.position?.y === from.y) {
+        return graph
+      }
       return {
         ...graph,
-        components: graph.components.map(c => {
-          if (c.id === action.componentId) {
-            return {
-              ...c,
-              terminals: c.terminals.map(t => ({
-                ...t,
-                position: {
-                  x: t.position.x + action.position.x,
-                  y: t.position.y + action.position.y
-                }
-              }))
-            }
-          }
-          return c
-        }),
+        components: graph.components.map(c => (c.id === action.componentId ? placeAt(c, plan.position) : c)),
         version: (graph.version ?? 0) + 1
       }
     }
-
     case 'TOGGLE_SWITCH': {
       return {
         ...graph,

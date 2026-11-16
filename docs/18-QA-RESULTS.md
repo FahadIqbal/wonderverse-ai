@@ -170,3 +170,15 @@ First-load JS on the portal (Playwright, response bodies, uncompressed): 293.5 -
 | `caffeinate -i npm run e2e:ci` | 83 passed, 19 skipped, 0 failed (74 before; +3 tests x 3 projects in `e2e/learning-ux.spec.ts`: tour skip and reopen, next-step text and meter in both views, recap content and reload) |
 - No existing E2E test was edited. The tour card is not modal, so flows that press Start mission still work with it open.
 - Not run: GitHub Actions result for this commit is recorded in docs/12 or the final report, not here. Everything above is Playwright emulation on software GL; no screen reader, real device or learner testing.
+## Drag-and-drop pass (2026-11-16, macOS, Playwright 1.65.1)
+| Command | Result |
+|---|---|
+| `npx tsc -b` | clean |
+| `npm run typecheck:e2e` | clean |
+| `npm run lint` | clean |
+| `npm run test:run` | 38 files, 371 tests passed (331 before; new: layout and position independence, drag controller, `rayToBench`, session v2 -> v3, schematic keyboard move and undo) |
+| `npm run build` | passes; main 262.06 kB (was 259.56), MissionView 57.95 kB (was 55.40), LabScene 938.96 kB (was 936.32), CSS 26.46 kB |
+| `caffeinate -i npm run e2e:ci` | 93 passed, 24 skipped, 0 failed, 0 flaky (83 passed, 19 skipped before; +5 tests x 3 projects in `e2e/move-parts.spec.ts`) |
+- One earlier full run reported 1 flaky (final switch click after a drag landed before the feedback bar had settled and shifted the stage). The test now waits for the message and re-centres the stage; 6 repeats of that test passed. Not proof it cannot recur.
+- The 3D drag test uses `page.mouse` on the software-GL canvas and is reliable here on the desktop project; it is skipped on tablet and mobile (they default to the schematic). The touch test sends real touch events through the Chrome DevTools Protocol (Chromium, touch projects only).
+- Not run: GitHub Actions for this commit (see docs/12 or the final report). No real GPU, real touch device, screen reader or learner testing.

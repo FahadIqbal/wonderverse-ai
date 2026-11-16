@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import type { Locator, Page } from '@playwright/test'
 import { expect } from './fixtures'
+import { BENCH_CENTER, WORLD_SCALE, fitCameraDistance } from '../src/features/lab/scene/geometry'
 
 export type View = '3d' | 'schematic'
 export const SESSION_KEY = 'wonderverse:session:v1'
@@ -109,4 +110,33 @@ export async function axeViolations(page: Page): Promise<string[]> {
     const result = await axe.run(document, { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice'] } })
     return result.violations.map(v => `${v.id} (${v.impact}): ${v.nodes.map(n => String(n.target)).join(' | ')}`)
   })
+}
+
+/**
+ * Screen position of a schematic point on the 3D bench, for driving the canvas with the mouse. Replays the scene's
+ * default camera (position (0, 6.5, 8) scaled out on narrow canvases by `fitCameraDistance`, looking at the origin,
+ * fov 45) and projects the point at `height` world units above the bench. Valid only before the camera is orbited.
+ */
+export async function benchPointOnScreen(page: Page, point: { x: number; y: number }, height = 0.3) {
+  const box = await page.getByTestId('scene-stage').locator('canvas').boundingBox()
+  if (!box) throw new Error('3D canvas has no box')
+  const fov = 45
+  const aspect = box.width / box.height
+  const home = Math.hypot(6.5, 8)
+  const fit = fitCameraDistance(aspect, fov)
+  const k = home < fit ? fit / home : 1
+  const cam = [0, 6.5 * k, 8 * k]
+  const world = [(point.x - BENCH_CENTER.x) / WORLD_SCALE, height, (point.y - BENCH_CENTER.y) / WORLD_SCALE]
+  const norm = (v: number[]) => v.map(n => n / Math.hypot(...v))
+  const dot = (a: number[], b: number[]) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
+  const cross = (a: number[], b: number[]) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]
+  const forward = norm(cam.map(n => -n))
+  const right = norm(cross(forward, [0, 1, 0]))
+  const up = cross(right, forward)
+  const v = world.map((n, i) => n - cam[i])
+  const depth = dot(v, forward)
+  const t = Math.tan((fov * Math.PI) / 360)
+  const ndcX = dot(v, right) / (depth * t * aspect)
+  const ndcY = dot(v, up) / (depth * t)
+  return { x: box.x + ((ndcX + 1) / 2) * box.width, y: box.y + ((1 - ndcY) / 2) * box.height }
 }

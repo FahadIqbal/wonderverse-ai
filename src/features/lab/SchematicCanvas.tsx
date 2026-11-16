@@ -1,6 +1,17 @@
-import type { KeyboardEvent } from 'react'
-import type { CircuitComponent, CircuitGraph, SimulationReport, Terminal } from '../../domain/circuit'
+import { useEffect, useRef, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react'
+import {
+  FOOTPRINT,
+  LARGE_STEP_CELLS,
+  componentPosition,
+  stepTarget,
+  type CircuitComponent,
+  type CircuitGraph,
+  type SimulationReport,
+  type Terminal,
+} from '../../domain/circuit'
 import { PALETTE } from '../../ui/palette'
+import { pointerKind } from './drag/dragController'
+import { useComponentDrag } from './drag/useComponentDrag'
 import { terminalLabel, useLabStore } from './labStore'
 import { useRecentlyAdded, useRejectionPulse } from './useFeedbackMotion'
 import { useMotionPreference } from './useMotionPreference'
@@ -17,11 +28,11 @@ function isDeleteKey(e: KeyboardEvent) {
   return e.key === 'Delete' || e.key === 'Backspace'
 }
 
-function center(c: CircuitComponent) {
-  const xs = c.terminals.map(t => t.position.x)
-  const ys = c.terminals.map(t => t.position.y)
-  return { x: (Math.min(...xs) + Math.max(...xs)) / 2, y: (Math.min(...ys) + Math.max(...ys)) / 2 }
-}
+const center = componentPosition
+
+/** Schematic viewBox width. The svg is drawn at 1:1 or larger, so client pixels map to units by rect.width / this. */
+const VIEW_WIDTH = 680
+const ARROWS: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }
 
 const STROKE = PALETTE.aqua
 const GOLD = PALETTE.gold
@@ -118,7 +129,32 @@ function TerminalDot({ terminal, graph, pending }: { terminal: Terminal; graph: 
     </g>
   )
 }
-export function SchematicCanvas({ graph, report }: Props) {
+export function SchematicCanvas({ graph: storedGraph, report }: Props) {
+  const moveComponent = useLabStore(s => s.moveComponent)
+  const svgRef = useRef<SVGSVGElement>(null)
+  const suppressClick = useRef(false)
+  const drag = useComponentDrag(storedGraph, moveComponent)
+  // While a part is being dragged, draw it (and so its wires) at the snapped preview spot. The store changes on drop.
+  const graph = drag.displayGraph
+  const dragging = drag.state.phase === 'dragging' ? drag.state : null
+  // `touch-action: none` is ignored on svg child elements in some browsers, so a finger drag on a part would start
+  // scrolling the stage instead. Cancelling touchmove while a finger is down on a part keeps the part under the finger.
+  // Taps, and a finger on empty space (which scrolls the stage sideways on a phone), are left alone.
+  const getDragState = drag.getState
+  useEffect(() => {
+    const svg = svgRef.current
+    if (!svg) return
+    const stop = (e: TouchEvent) => {
+      if (getDragState().phase !== 'idle' && e.cancelable) e.preventDefault()
+    }
+    svg.addEventListener('touchmove', stop, { passive: false })
+    return () => svg.removeEventListener('touchmove', stop)
+  }, [getDragState])
+  const layoutPoint = (e: ReactPointerEvent) => {
+    const rect = svgRef.current?.getBoundingClientRect()
+    const scale = rect && rect.width > 0 ? VIEW_WIDTH / rect.width : 1
+    return { x: (e.clientX - (rect?.left ?? 0)) * scale, y: (e.clientY - (rect?.top ?? 0)) * scale }
+  }
   const pendingTerminalId = useLabStore(s => s.pendingTerminalId)
   const removeComponent = useLabStore(s => s.removeComponent)
   const removeWire = useLabStore(s => s.removeWire)
@@ -142,10 +178,11 @@ export function SchematicCanvas({ graph, report }: Props) {
       data-rejected={String(shaking)}
     >
     <svg
-      viewBox={`0 0 680 ${height}`}
+      ref={svgRef}
+      viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
       role="group"
       aria-label="Circuit schematic"
-      className="w-full min-w-[680px]"
+      className="w-full min-w-[680px] select-none"
     >
       {graph.components.length === 0 && (
         <g>
@@ -193,12 +230,35 @@ export function SchematicCanvas({ graph, report }: Props) {
         )
       })}
 
+      {dragging && (
+        <g data-testid="snap-preview" data-valid={String(dragging.plan.ok)} pointerEvents="none">
+          <rect
+            x={dragging.plan.position.x - FOOTPRINT.width / 2}
+            y={dragging.plan.position.y - FOOTPRINT.height / 2}
+            width={FOOTPRINT.width}
+            height={FOOTPRINT.height}
+            rx={12}
+            fill={dragging.plan.ok ? PALETTE.aqua : PALETTE.coral}
+            fillOpacity={0.1}
+            stroke={dragging.plan.ok ? PALETTE.aqua : PALETTE.coral}
+            strokeWidth={2}
+            strokeDasharray={dragging.plan.ok ? '6 4' : undefined}
+          />
+          {!dragging.plan.ok && (
+            <text x={dragging.plan.position.x} y={dragging.plan.position.y - FOOTPRINT.height / 2 - 6} textAnchor="middle" fill={PALETTE.coral} fontSize={13}>
+              Taken, part will stay put
+            </text>
+          )}
+        </g>
+      )}
       {graph.components.map(c => {
         const { x, y } = center(c)
         const result = report.componentResults.find(r => r.componentId === c.id)
         const lit = c.type === 'lamp' && (result?.isEnergized ?? false)
         const name = c.label ?? c.id
         const isSwitch = c.type === 'switch'
+        const isDragged = dragging?.componentId === c.id
+        const keyboardHint = ' Arrow keys move it one grid step, Shift with arrows moves five.'
         return (
           <g key={c.id}>
             <g
@@ -206,16 +266,58 @@ export function SchematicCanvas({ graph, report }: Props) {
               role={isSwitch ? 'button' : 'group'}
               aria-label={
                 isSwitch
-                  ? `${name} switch, currently ${c.isOn ? 'closed' : 'open'}. Press Enter to toggle, Delete to remove.`
-                  : `${name}${c.type === 'lamp' ? (lit ? ', lit' : ', not lit') : ''}. Press Delete to remove.`
+                  ? `${name} switch, currently ${c.isOn ? 'closed' : 'open'}. Press Enter to toggle, Delete to remove.${keyboardHint}`
+                  : `${name}${c.type === 'lamp' ? (lit ? ', lit' : ', not lit') : ''}. Press Delete to remove.${keyboardHint}`
               }
               aria-pressed={isSwitch ? c.isOn : undefined}
               data-component-id={c.id}
               data-lit={c.type === 'lamp' ? String(lit) : undefined}
-              className={isSwitch ? 'cursor-pointer' : undefined}
-              onClick={isSwitch ? () => toggleSwitch(c.id) : undefined}
+              data-dragging={isDragged ? 'true' : undefined}
+              data-x={x}
+              data-y={y}
+              className={`group ${isDragged ? 'cursor-grabbing' : 'cursor-grab'}`}
+              style={{ touchAction: 'none' }}
+              onClick={
+                isSwitch
+                  ? () => {
+                      if (!suppressClick.current) toggleSwitch(c.id)
+                    }
+                  : undefined
+              }
+              onPointerDown={e => {
+                if (!e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) return
+                try {
+                  e.currentTarget.setPointerCapture(e.pointerId)
+                } catch {
+                  // Capture is a convenience; the drag still works while the pointer stays over the part.
+                }
+                drag.press(c.id, { x: e.clientX, y: e.clientY }, layoutPoint(e), pointerKind(e.pointerType))
+              }}
+              onPointerMove={e => {
+                if (drag.state.phase !== 'idle') drag.move({ x: e.clientX, y: e.clientY }, layoutPoint(e))
+              }}
+              onPointerUp={e => {
+                if (e.currentTarget.hasPointerCapture?.(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId)
+                const outcome = drag.release()
+                if (outcome.kind === 'drop') {
+                  // The browser sends a click after pointerup. A drag that ends on a switch must not toggle it.
+                  suppressClick.current = true
+                  setTimeout(() => {
+                    suppressClick.current = false
+                  }, 0)
+                }
+              }}
+              onPointerCancel={() => drag.cancel()}
               onKeyDown={e => {
-                if (isDeleteKey(e)) {
+                const step = ARROWS[e.key]
+                if (step && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                  e.preventDefault()
+                  const n = e.shiftKey ? LARGE_STEP_CELLS : 1
+                  moveComponent(c.id, stepTarget(center(c), step[0] * n, step[1] * n))
+                } else if (e.key === 'Escape' && drag.state.phase !== 'idle') {
+                  e.stopPropagation()
+                  drag.cancel()
+                } else if (isDeleteKey(e)) {
                   e.preventDefault()
                   removeComponent(c.id)
                 } else if (isSwitch && isActivateKey(e)) {
@@ -224,6 +326,19 @@ export function SchematicCanvas({ graph, report }: Props) {
                 }
               }}
             >
+              {/* Hover, focus and drag halo. A solid outline, so it does not depend on colour or motion. */}
+              <rect
+                x={x - FOOTPRINT.width / 2 + 4}
+                y={y - 32}
+                width={FOOTPRINT.width - 8}
+                height={64}
+                rx={10}
+                fill="none"
+                stroke={GOLD}
+                strokeWidth={2}
+                className={`${isDragged ? 'opacity-100' : 'opacity-0'} group-hover:opacity-100 group-focus-visible:opacity-100`}
+                data-testid={`halo-${c.id}`}
+              />
               <rect x={x - 45} y={y - 32} width={90} height={64} fill="transparent" />
               <Symbol c={c} lit={lit} pulse={!calm} />
             </g>

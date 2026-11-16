@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { CircuitGraph } from '../circuit'
+import { CircuitGraph, normalizeLayout } from '../circuit'
 import { getMission, MISSIONS } from './missions'
 import { SemanticEvent } from './schemas'
 /**
@@ -10,8 +10,11 @@ import { SemanticEvent } from './schemas'
 export const SESSION_KEY = 'wonderverse:session:v1'
 /** Every key the app writes starts with this prefix, so erase can clear them all (R8). */
 export const STORAGE_PREFIX = 'wonderverse:'
-/** v2 added `settings.tourSeen` and the per-mission `recaps`. v1 sessions are migrated on load, never discarded. */
-export const SESSION_SCHEMA_VERSION = 2
+/**
+ * v2 added `settings.tourSeen` and the per-mission `recaps`. v3 added an explicit layout `position` on every saved
+ * component. Older sessions are migrated on load, never discarded.
+ */
+export const SESSION_SCHEMA_VERSION = 3
 export const MAX_SESSION_BYTES = 400_000
 export const MAX_EVENTS = 1000
 const MAX_COMPONENTS = 40
@@ -21,7 +24,7 @@ function graphIsSane(g: CircuitGraph): boolean {
   const finite = (n: number | undefined) => n === undefined || Number.isFinite(n)
   const unique = (ids: string[]) => new Set(ids).size === ids.length
   return (
-    g.components.every(c => finite(c.resistance) && finite(c.voltage) && c.terminals.every(t => finite(t.position.x) && finite(t.position.y))) &&
+    g.components.every(c => finite(c.resistance) && finite(c.voltage) && c.terminals.every(t => finite(t.position.x) && finite(t.position.y)) && finite(c.position?.x) && finite(c.position?.y)) &&
     unique(g.components.map(c => c.id)) &&
     unique(g.components.flatMap(c => c.terminals.map(t => t.id))) &&
     unique(g.wires.map(w => w.id))
@@ -29,7 +32,10 @@ function graphIsSane(g: CircuitGraph): boolean {
 }
 export const PersistedGraph = CircuitGraph.refine(g => g.components.length <= MAX_COMPONENTS && g.wires.length <= MAX_WIRES, {
   message: 'Circuit is too large',
-}).refine(graphIsSane, { message: 'Circuit has duplicate ids or non-finite numbers' })
+})
+  .refine(graphIsSane, { message: 'Circuit has duplicate ids or non-finite numbers' })
+  // Terminals are the layout the views draw, so a stored position that disagrees with them is replaced by their centre.
+  .transform(normalizeLayout)
 export const PersistedMissionState = z.object({
   phase: z.enum(['briefing', 'building', 'quiz', 'complete']),
   eventLog: z.array(SemanticEvent).max(MAX_EVENTS),
@@ -119,7 +125,15 @@ function migrateV1(json: unknown): unknown {
     (Array.isArray(v1.completed) && v1.completed.length > 0) ||
     (typeof v1.missions === 'object' && v1.missions !== null && Object.keys(v1.missions).length > 0)
   const settings = typeof v1.settings === 'object' && v1.settings !== null ? v1.settings : {}
-  return { ...v1, schemaVersion: SESSION_SCHEMA_VERSION, settings: { ...settings, tourSeen: hasProgress }, recaps: {} }
+  return { ...v1, schemaVersion: 2, settings: { ...settings, tourSeen: hasProgress }, recaps: {} }
+}
+/**
+ * v2 -> v3. Saved components gain a `position`. The real value is filled in when each graph is validated
+ * (normalizeLayout), so this step only moves the version forward and leaves everything else untouched. Malformed v2
+ * data is left as is and fails validation (corrupt) like any other bad input.
+ */
+function migrateV2(json: unknown): unknown {
+  return { ...(json as object), schemaVersion: SESSION_SCHEMA_VERSION }
 }
 /**
  * Never throws. Missing, corrupt, oversized or unknown-version data yields a fresh session and says why.
@@ -137,7 +151,8 @@ export function parseSession(raw: string | null): SessionLoadResult {
   }
   if (typeof json !== 'object' || json === null || Array.isArray(json)) return fresh('corrupt')
   const version = (json as { schemaVersion?: unknown }).schemaVersion
-  if (version === 1) json = migrateV1(json)
+  if (version === 1) json = migrateV2(migrateV1(json))
+  else if (version === 2) json = migrateV2(json)
   else if (version !== SESSION_SCHEMA_VERSION) return fresh(typeof version === 'number' ? 'unsupported-version' : 'corrupt')
   const envelope = Session.omit({ missions: true, recaps: true })
     .extend({ missions: z.record(z.string(), z.unknown()), recaps: z.record(z.string(), z.unknown()) })

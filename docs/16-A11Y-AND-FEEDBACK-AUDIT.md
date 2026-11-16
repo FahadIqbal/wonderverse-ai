@@ -46,3 +46,10 @@ Scope: every interactive control in `src/`. "Status" is the state after T11. Che
 
 ## Not covered
 No screen reader (VoiceOver, NVDA) pass, no 200% zoom or real touch-device pass, no high-contrast or forced-colors visual review beyond a computed outline check, and the 3D canvas itself has no accessible alternative other than the port list and schematic. These stay on the manual QA list (T12).
+## Moving parts (2026-11-16)
+| Action | Disabled / loading / error | Feedback and announcement | Keyboard | Status |
+|---|---|---|---|---|
+| Move a part by arrow keys (schematic) | A move onto another part or past the bench edge changes nothing and adds no undo step | Polite live region: "Moved Lamp 1 to column 54, row 12. You can undo this.", "Lamp 1 is at the edge of the bench.", or an error "Move rejected: Lamp 1 would overlap Switch 1." Focus stays on the part | Arrow = one 10-unit cell, Shift+arrow = five. Undo and redo as before | New |
+| Drag a part (schematic, mouse or touch) | Blocked spot: coral solid outline plus the words "Taken, part will stay put"; release is rejected with the same error text | Outline, dashed aqua when free; solid halo on hover and keyboard focus; cursor grab / grabbing | Same action as the arrow keys (no drag needed) | New |
+| Drag a part (3D) | Blocked spot: coral solid outline; release rejected with feedback | Hover outline, snap preview, grab and grabbing cursor. Orbit is off during the drag | Not available on the canvas; use the Schematic view (caption says so) | New |
+Checks: axe in real Chrome after a keyboard move in the schematic (`e2e/move-parts.spec.ts`), jsdom keyboard tests for announcement, focus, undo and edge cases. Not checked: screen reader output of the move announcements, real touch devices.

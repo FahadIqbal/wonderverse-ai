@@ -31,7 +31,8 @@ export function SchematicEditor() {
 
       <p className="text-sm text-slate-300">
         Connect two terminals: click or press Enter on the first, then the second. Escape cancels. With a part or wire
-        focused, Delete removes it.
+        focused, Delete removes it. To move a part, drag it, or focus it and use the arrow keys (Shift for bigger
+        steps). Undo reverses a move.
       </p>
 
       <FeedbackBar feedback={feedback}>

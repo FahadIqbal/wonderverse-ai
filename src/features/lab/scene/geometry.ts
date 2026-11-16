@@ -22,6 +22,23 @@ export function toWorld(p: { x: number; y: number }, height = 0): Vec3 {
   return [(p.x - BENCH_CENTER.x) / WORLD_SCALE, height, (p.y - BENCH_CENTER.y) / WORLD_SCALE]
 }
 
+/** Inverse of `toWorld` for a point on the bench plane: world x and z back to schematic units. */
+export function fromWorld(x: number, z: number): { x: number; y: number } {
+  return { x: x * WORLD_SCALE + BENCH_CENTER.x, y: z * WORLD_SCALE + BENCH_CENTER.y }
+}
+
+/**
+ * Where a pointer ray meets the bench plane (world y = 0), as a schematic point. Null when the ray is parallel to
+ * the plane or points away from it. Pure maths so the drag mapping runs in plain Vitest.
+ */
+export function rayToBench(origin: Vec3, direction: Vec3): { x: number; y: number } | null {
+  const dy = direction[1]
+  if (Math.abs(dy) < 1e-9) return null
+  const t = -origin[1] / dy
+  if (!Number.isFinite(t) || t < 0) return null
+  return fromWorld(origin[0] + direction[0] * t, origin[2] + direction[2] * t)
+}
+
 export interface PortPlacement {
   terminalId: string
   name: string

@@ -2,7 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, invalidate, useFrame, useThree } from '@react-three/fiber'
 import { CanvasTexture, type Mesh, type MeshBasicMaterial, type MeshStandardMaterial, type PerspectiveCamera } from 'three'
 import { Line, OrbitControls } from '@react-three/drei'
-import type { CircuitComponent, CircuitGraph, SimulationReport } from '../../../domain/circuit'
+import type { ThreeEvent } from '@react-three/fiber'
+import { FOOTPRINT, componentPosition, type CircuitComponent, type CircuitGraph, type SimulationReport } from '../../../domain/circuit'
+import { pointerKind } from '../drag/dragController'
+import { useComponentDrag } from '../drag/useComponentDrag'
 import type { MotionPreference } from '../useMotionPreference'
 import { PALETTE } from '../../../ui/palette'
 import { attachContextLossHandler } from './webgl'
@@ -17,7 +20,10 @@ import {
   litLampCount,
   sceneFrameloop,
   placeGraph,
+  rayToBench,
   terminalWorldPosition,
+  toWorld,
+  WORLD_SCALE,
   wireArcMid,
   wireEnergized,
   type ComponentPlacement,
@@ -36,6 +42,8 @@ export interface LabSceneProps {
   /** Same labStore actions the schematic uses. The scene never mutates the graph itself. */
   onSelectTerminal?: (terminalId: string) => void
   onToggleSwitch?: (componentId: string) => void
+  /** Same labStore action the schematic and keyboard use. Called once per finished drag, never per frame. */
+  onMoveComponent?: (componentId: string, position: { x: number; y: number }) => void
 }
 
 // docs/04 palette, shared with Tailwind and the CSS variables.
@@ -181,10 +189,7 @@ function SwitchModel({ closed, onToggle }: { closed: boolean; onToggle: () => vo
           e.stopPropagation()
           onToggle()
         }}
-        onPointerOver={e => {
-          e.stopPropagation()
-          setCursor(true)
-        }}
+        onPointerOver={() => setCursor(true)}
         onPointerOut={() => setCursor(false)}
       >
         <boxGeometry args={[1.4, 0.8, 1.0]} />
@@ -352,12 +357,117 @@ function BlobShadow({ texture, span }: { texture: CanvasTexture; span: number })
   )
 }
 
+const FOOT_HALF_W = FOOTPRINT.width / WORLD_SCALE / 2
+const FOOT_HALF_D = FOOTPRINT.height / WORLD_SCALE / 2
+/**
+ * Outline of the space a part occupies on the bench. Used for hover (aqua, solid), the drop preview (aqua, dashed)
+ * and a blocked drop (coral, solid). Shape differs as well as colour, so the state is not colour alone.
+ */
+function FootprintMarker({ position, color, dashed, testId }: { position: [number, number, number]; color: string; dashed: boolean; testId: string }) {
+  const y = 0.03
+  const points: [number, number, number][] = [
+    [-FOOT_HALF_W, y, -FOOT_HALF_D],
+    [FOOT_HALF_W, y, -FOOT_HALF_D],
+    [FOOT_HALF_W, y, FOOT_HALF_D],
+    [-FOOT_HALF_W, y, FOOT_HALF_D],
+    [-FOOT_HALF_W, y, -FOOT_HALF_D],
+  ]
+  return (
+    <group position={position} name={testId}>
+      <Line points={points} color={color} lineWidth={3} dashed={dashed} dashSize={0.16} gapSize={0.1} />
+    </group>
+  )
+}
 function ContextLossWatcher({ onContextLost }: { onContextLost?: () => void }) {
   const canvas = useThree(s => s.gl.domElement)
   useEffect(() => (onContextLost ? attachContextLossHandler(canvas, onContextLost) : undefined), [canvas, onContextLost])
   return null
 }
-function Scene({ graph, report, pendingTerminalId, motion, onSelectTerminal, onToggleSwitch, onContextLost }: LabSceneProps) {
+function Scene({ graph: storedGraph, report, pendingTerminalId, motion, onSelectTerminal, onToggleSwitch, onMoveComponent, onContextLost }: LabSceneProps) {
+  const drag = useComponentDrag(storedGraph, (id, position) => onMoveComponent?.(id, position))
+  // While a part is dragged, the scene draws it (and its wires) at the snapped preview spot. The store changes on drop.
+  const graph = drag.displayGraph
+  const dragging = drag.state.phase === 'dragging' ? drag.state : null
+  const active = drag.state.phase !== 'idle'
+  const controls = useThree(s => s.controls) as { enabled: boolean } | null
+  const [hoverId, setHoverId] = useState<string | null>(null)
+  // Orbit is off for as long as a gesture on a part is in progress, and always comes back.
+  useEffect(() => {
+    if (!active || !controls) return
+    controls.enabled = false
+    // Fallback for a release that R3F does not deliver to the part (pointer left it before the drag began).
+    const end = () => {
+      if (drag.getState().phase !== 'idle') drag.release()
+    }
+    const abort = () => drag.cancel()
+    window.addEventListener('pointerup', end)
+    window.addEventListener('pointercancel', abort)
+    return () => {
+      controls.enabled = true
+      window.removeEventListener('pointerup', end)
+      window.removeEventListener('pointercancel', abort)
+    }
+  }, [active, controls]) // eslint-disable-line react-hooks/exhaustive-deps
+  const isDragging = dragging !== null
+  useEffect(() => {
+    if (!isDragging) return
+    document.body.style.cursor = 'grabbing'
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') drag.cancel()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.cursor = ''
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [isDragging]) // eslint-disable-line react-hooks/exhaustive-deps
+  const rayPoint = (e: ThreeEvent<PointerEvent>) =>
+    rayToBench(e.ray.origin.toArray() as [number, number, number], e.ray.direction.toArray() as [number, number, number])
+  const bindDrag = (c: CircuitComponent) => ({
+    onPointerOver: () => {
+      setHoverId(c.id)
+      if (c.type !== 'switch' && !active) document.body.style.cursor = 'grab'
+    },
+    onPointerOut: () => {
+      setHoverId(h => (h === c.id ? null : h))
+      if (!active) document.body.style.cursor = ''
+    },
+    onPointerDown: (e: ThreeEvent<PointerEvent>) => {
+      const ne = e.nativeEvent
+      if (!ne.isPrimary || (ne.pointerType === 'mouse' && ne.button !== 0)) return
+      const at = rayPoint(e)
+      if (!at) return
+      // Turn orbit off before it can start rotating on this same press.
+      if (controls) controls.enabled = false
+      drag.press(c.id, { x: ne.clientX, y: ne.clientY }, at, pointerKind(ne.pointerType))
+    },
+    onPointerMove: (e: ThreeEvent<PointerEvent>) => {
+      if (drag.getState().phase === 'idle') return
+      const at = rayPoint(e)
+      if (!at) return
+      const was = drag.getState().phase
+      drag.move({ x: e.nativeEvent.clientX, y: e.nativeEvent.clientY }, at)
+      // Capture only once the press has become a drag, so a plain click on a port or switch is untouched.
+      if (was === 'pressed' && drag.getState().phase === 'dragging') {
+        try {
+          ;(e.target as unknown as Element).setPointerCapture(e.pointerId)
+        } catch {
+          // The drag still follows the pointer while it stays over the bench.
+        }
+      }
+    },
+    onPointerUp: (e: ThreeEvent<PointerEvent>) => {
+      if (drag.getState().phase === 'idle') return
+      try {
+        ;(e.target as unknown as Element).releasePointerCapture(e.pointerId)
+      } catch {
+        // Nothing was captured (a press that never became a drag).
+      }
+      drag.release()
+    },
+    onPointerCancel: () => drag.cancel(),
+    onLostPointerCapture: () => drag.cancel(),
+  })
   const placements = placeGraph(graph)
   const animate = motion.animateFlow
   const pulse = lampPulseActive(motion.calm, litLampCount(graph, report))
@@ -386,12 +496,41 @@ function Scene({ graph, report, pendingTerminalId, motion, onSelectTerminal, onT
         const component = graph.components.find(c => c.id === p.componentId)
         if (!component) return null
         return (
-          <group key={p.componentId} name={p.componentId} position={p.position} rotation={[0, p.rotationY, 0]}>
+          <group
+            key={p.componentId}
+            name={p.componentId}
+            position={p.position}
+            rotation={[0, p.rotationY, 0]}
+            {...bindDrag(component)}
+          >
             {blob && <BlobShadow texture={blob} span={p.span} />}
+            {/* Invisible body-sized hit box so thin parts are easy to grab. Shorter than the part so the ports at its ends stay clickable. */}
+            {component.type !== 'switch' && (
+              <mesh position={[0, 0.3, 0]}>
+                <boxGeometry args={[Math.max(0.6, p.span - 0.8), 0.7, 1.0]} />
+                <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+              </mesh>
+            )}
             <Model component={component} placement={p} report={report} pulse={pulse} onToggleSwitch={onToggleSwitch} />
           </group>
         )
       })}
+      {hoverId && !dragging && graph.components.some(c => c.id === hoverId) && (
+        <FootprintMarker
+          testId={`hover-${hoverId}`}
+          position={toWorld(componentPosition(graph.components.find(c => c.id === hoverId)!))}
+          color={COLORS.aqua}
+          dashed={false}
+        />
+      )}
+      {dragging && (
+        <FootprintMarker
+          testId={dragging.plan.ok ? 'snap-preview' : 'snap-blocked'}
+          position={toWorld(dragging.plan.position)}
+          color={dragging.plan.ok ? COLORS.aqua : COLORS.coral}
+          dashed={dragging.plan.ok}
+        />
+      )}
       {/* Ports are in world space so wires and ports line up exactly with graph terminals. */}
       {placements.flatMap(p =>
         p.ports.map(port => (

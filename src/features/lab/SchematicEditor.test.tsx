@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createEmptyGraph } from '../../domain/circuit'
 import { SchematicEditor } from './SchematicEditor'
@@ -123,5 +123,92 @@ describe('SchematicEditor', () => {
     ;(lampEl() as unknown as HTMLElement).focus()
     await user.keyboard('{Delete}')
     expect(useLabStore.getState().graph.components.map(c => c.id)).toEqual(['battery-1'])
+  })
+
+  describe('moving parts', () => {
+    const posOf = (id: string) => useLabStore.getState().graph.components.find(c => c.id === id)!.position!
+    const focusPart = (id: string) => (lampEl(id) as unknown as HTMLElement).focus()
+
+    it('arrow keys move the focused part one grid step, keep focus, and announce the new cell', async () => {
+      const user = userEvent.setup()
+      await addPart(user, 'Lamp')
+      expect(posOf('lamp-1')).toEqual({ x: 110, y: 70 })
+      focusPart('lamp-1')
+      await user.keyboard('{ArrowRight}')
+      expect(posOf('lamp-1')).toEqual({ x: 120, y: 70 })
+      await user.keyboard('{ArrowDown}')
+      expect(posOf('lamp-1')).toEqual({ x: 120, y: 80 })
+      expect(lampEl()).toHaveFocus()
+      expect(feedback()).toHaveTextContent('Moved Lamp 1 to column 12, row 8')
+      expect(feedback()).toHaveAttribute('aria-live', 'polite')
+    })
+
+    it('Shift+arrow moves five cells', async () => {
+      const user = userEvent.setup()
+      await addPart(user, 'Lamp')
+      focusPart('lamp-1')
+      await user.keyboard('{Shift>}{ArrowRight}{/Shift}')
+      expect(posOf('lamp-1')).toEqual({ x: 160, y: 70 })
+    })
+
+    it('moves the terminals and so the wire ends with the part, and the solver result is unchanged', async () => {
+      const user = userEvent.setup()
+      await addPart(user, 'Battery')
+      await addPart(user, 'Lamp')
+      await connectByKeyboard(user, 'Battery 1 positive', 'Lamp 1 left')
+      await connectByKeyboard(user, 'Lamp 1 right', 'Battery 1 negative')
+      expect(lampEl()).toHaveAttribute('data-lit', 'true')
+      const before = document.querySelector('[data-wire-id="wire-1"] path')!.getAttribute('d')
+      focusPart('lamp-1')
+      await user.keyboard('{Shift>}{ArrowDown}{/Shift}')
+      expect(document.querySelector('[data-wire-id="wire-1"] path')!.getAttribute('d')).not.toBe(before)
+      expect(lampEl()).toHaveAttribute('data-lit', 'true')
+      expect(useLabStore.getState().graph.wires).toHaveLength(2)
+    })
+
+    it('each key press is one undo step, and undo restores the exact position', async () => {
+      const user = userEvent.setup()
+      await addPart(user, 'Lamp')
+      focusPart('lamp-1')
+      await user.keyboard('{ArrowRight}{ArrowRight}{ArrowDown}')
+      expect(posOf('lamp-1')).toEqual({ x: 130, y: 80 })
+      act(() => useLabStore.getState().undo())
+      expect(posOf('lamp-1')).toEqual({ x: 130, y: 70 })
+      act(() => useLabStore.getState().undo())
+      act(() => useLabStore.getState().undo())
+      expect(posOf('lamp-1')).toEqual({ x: 110, y: 70 })
+      expect(useLabStore.getState().graph.components[0].terminals.map(t => t.position.x)).toEqual([75, 145])
+      act(() => useLabStore.getState().redo())
+      expect(posOf('lamp-1')).toEqual({ x: 120, y: 70 })
+    })
+
+    it('rejects a move onto another part with error feedback and no history entry', async () => {
+      const user = userEvent.setup()
+      await addPart(user, 'Lamp')
+      await addPart(user, 'Resistor')
+      focusPart('lamp-1')
+      // Lamp 1 is at x=110 and Resistor 1 at x=330. Two Shift+Right presses reach 210, the next would land on 260.
+      for (let i = 0; i < 2; i++) await user.keyboard('{Shift>}{ArrowRight}{/Shift}')
+      expect(posOf('lamp-1')).toEqual({ x: 210, y: 70 })
+      const pastBefore = useLabStore.getState().past.length
+      await user.keyboard('{Shift>}{ArrowRight}{/Shift}')
+      expect(posOf('lamp-1')).toEqual({ x: 210, y: 70 })
+      expect(useLabStore.getState().past.length).toBe(pastBefore)
+      expect(feedback()).toHaveAttribute('data-kind', 'error')
+      expect(feedback()).toHaveTextContent('Move rejected: Lamp 1 would overlap Resistor 1')
+    })
+
+    it('keeps a part inside the bench and says so', async () => {
+      const user = userEvent.setup()
+      await addPart(user, 'Lamp')
+      focusPart('lamp-1')
+      for (let i = 0; i < 3; i++) await user.keyboard('{Shift>}{ArrowLeft}{/Shift}')
+      expect(posOf('lamp-1').x).toBe(80)
+      const past = useLabStore.getState().past.length
+      await user.keyboard('{ArrowLeft}')
+      expect(posOf('lamp-1').x).toBe(80)
+      expect(useLabStore.getState().past.length).toBe(past)
+      expect(feedback()).toHaveTextContent('edge of the bench')
+    })
   })
 })

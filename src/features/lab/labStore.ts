@@ -2,6 +2,10 @@ import { create } from 'zustand'
 import {
   circuitReducer,
   createEmptyGraph,
+  describeCell,
+  isCellFree,
+  planMove,
+  terminalCenter,
   solveCircuit,
   validateConnection,
   type CircuitAction,
@@ -58,6 +62,12 @@ export interface LabState {
   removeComponent: (componentId: string) => void
   removeWire: (wireId: string) => void
   toggleSwitch: (componentId: string) => void
+  /**
+   * Moves a part so its centre is at `position` (layout only). One call is one undo step. Out-of-range targets are
+   * clamped to the bench and snapped to the grid; a spot held by another part is rejected with error feedback.
+   * Returns whether the part moved.
+   */
+  moveComponent: (componentId: string, position: { x: number; y: number }) => boolean
   selectTerminal: (terminalId: TerminalId) => void
   cancelConnection: () => void
   clearCircuit: () => void
@@ -81,23 +91,11 @@ function slotCenter(slot: number) {
   }
 }
 
-function componentCenter(c: CircuitComponent) {
-  const xs = c.terminals.map(t => t.position.x)
-  const ys = c.terminals.map(t => t.position.y)
-  return {
-    x: (Math.min(...xs) + Math.max(...xs)) / 2,
-    y: (Math.min(...ys) + Math.max(...ys)) / 2,
-  }
-}
-
 function firstFreeSlot(graph: CircuitGraph): number {
-  const centers = graph.components.map(componentCenter)
   for (let slot = 0; ; slot++) {
-    const s = slotCenter(slot)
-    if (!centers.some(c => Math.abs(c.x - s.x) < 1 && Math.abs(c.y - s.y) < 1)) return slot
+    if (isCellFree(graph, '', slotCenter(slot))) return slot
   }
 }
-
 const DISPLAY_NAME: Record<ComponentType, string> = {
   battery: 'Battery',
   lamp: 'Lamp',
@@ -117,6 +115,7 @@ export function createComponent(graph: CircuitGraph, type: ComponentType): Circu
   const n = nextIndex(graph, type)
   const id = `${type}-${n}`
   const { x, y } = slotCenter(firstFreeSlot(graph))
+  const position = { x, y }
   const left = { x: x - HALF_SPAN, y }
   const right = { x: x + HALF_SPAN, y }
   const label = `${DISPLAY_NAME[type]} ${n}`
@@ -126,6 +125,7 @@ export function createComponent(graph: CircuitGraph, type: ComponentType): Circu
       id,
       type,
       label,
+      position,
       voltage: 9,
       isOn: true,
       terminals: [
@@ -138,6 +138,7 @@ export function createComponent(graph: CircuitGraph, type: ComponentType): Circu
     id,
     type,
     label,
+    position,
     isOn: false,
     terminals: [
       { id: `${id}-a`, name: 'left', position: left },
@@ -246,6 +247,41 @@ export const useLabStore = create<LabState>((set, get) => ({
     set({ feedback: { kind: 'info', text: `${c.label ?? c.id} is now ${c.isOn ? 'open (off)' : 'closed (on)'}.` } })
   },
 
+  moveComponent: (componentId, position) => {
+    const { graph } = get()
+    const c = graph.components.find(x => x.id === componentId)
+    if (!c) return false
+    const name = c.label ?? c.id
+    const plan = planMove(graph, componentId, position)
+    if (!plan.ok) {
+      const other = plan.blockedBy ? graph.components.find(x => x.id === plan.blockedBy) : undefined
+      const text =
+        plan.reason === 'occupied'
+          ? `Move rejected: ${name} would overlap ${other?.label ?? other?.id ?? 'another part'}. It stayed where it was.`
+          : `Move rejected: ${name} could not be placed there.`
+      set({ feedback: { kind: 'error', text } })
+      return false
+    }
+    const here = terminalCenter(c)
+    if (plan.position.x === here.x && plan.position.y === here.y) {
+      set({
+        feedback: {
+          kind: 'info',
+          text: plan.clamped ? `${name} is at the edge of the bench.` : `${name} stayed where it was.`,
+        },
+      })
+      return false
+    }
+    get().dispatch({ type: 'MOVE_COMPONENT', componentId, position: plan.position })
+    const cell = describeCell(plan.position)
+    set({
+      feedback: {
+        kind: 'info',
+        text: `Moved ${name} to column ${cell.column}, row ${cell.row}${plan.clamped ? ' (held at the bench edge)' : ''}. You can undo this.`,
+      },
+    })
+    return true
+  },
   selectTerminal: terminalId => {
     const { graph, pendingTerminalId } = get()
     const prev: PortSelection = pendingTerminalId ? { phase: 'sourceSelected', source: pendingTerminalId } : IDLE

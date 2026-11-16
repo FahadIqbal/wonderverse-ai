@@ -28,6 +28,9 @@ export const CircuitComponent = z.object({
   id: z.string(),
   type: ComponentType,
   label: z.string().optional(),
+  // Layout only: centre of the body in schematic units. Optional (authored parts omit it and fall back to the
+  // centre of their terminals). Never read by the solver. See layout.ts.
+  position: Position.optional(),
   // Resistance in Ohms (for resistors and lamps)
   resistance: z.number().min(0).optional(),
   // Voltage in Volts (for batteries)
