@@ -18,7 +18,7 @@ export function FeedbackBar({ feedback, children }: { feedback: Feedback | null;
       aria-live="polite"
       data-testid="feedback"
       data-kind={feedback?.kind ?? 'none'}
-      className={`flex min-h-[2.75rem] items-center gap-2 rounded-xl border px-3 py-2 text-sm shadow-[0_6px_18px_-10px_rgba(0,0,0,0.7)] ${
+      className={`[@media(max-height:500px)]:fixed [@media(max-height:500px)]:inset-x-2 [@media(max-height:500px)]:bottom-1 [@media(max-height:500px)]:z-20 [@media(max-height:500px)]:min-h-0 [@media(max-height:500px)]:py-1 flex min-h-[2.75rem] items-center gap-2 rounded-xl border px-3 py-2 text-sm shadow-[0_6px_18px_-10px_rgba(0,0,0,0.7)] ${
         error
           ? 'border-observatory-coral bg-red-950/60 text-red-200'
           : 'border-observatory-navy-lighter bg-observatory-navy-light text-slate-200'

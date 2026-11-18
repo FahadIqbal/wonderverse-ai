@@ -118,6 +118,8 @@ export async function axeViolations(page: Page): Promise<string[]> {
  * fov 45) and projects the point at `height` world units above the bench. Valid only before the camera is orbited.
  */
 export async function benchPointOnScreen(page: Page, point: { x: number; y: number }, height = 0.3) {
+  // Project only once the scene has drawn its first frame, so the camera is at its home position.
+  await expect(page.getByTestId('scene-stage')).toHaveAttribute('data-frame', 'drawn')
   const box = await page.getByTestId('scene-stage').locator('canvas').boundingBox()
   if (!box) throw new Error('3D canvas has no box')
   const fov = 45

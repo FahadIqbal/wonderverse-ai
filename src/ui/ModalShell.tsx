@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode, type RefObject } from 'react'
 import { createPortal } from 'react-dom'
+import { useBackToClose } from '../app/backStack'
 
 const FOCUSABLE =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -35,6 +36,8 @@ function tryFocus(el: Element | null): boolean {
 export function ModalShell({ role, labelledBy, describedBy, initialFocusRef, onClose, className, children }: Props) {
   const [container] = useState(() => document.createElement('div'))
   const dialogRef = useRef<HTMLDivElement>(null)
+  // Android Back closes the dialog instead of leaving the page.
+  useBackToClose(true, onClose)
 
   useLayoutEffect(() => {
     const opener = document.activeElement

@@ -5,6 +5,7 @@ import { missionIndex } from '../domain/learning'
 import { useApplyMotionAttribute } from '../features/lab/useMotionPreference'
 import { ghostButton, secondaryButton } from '../ui/styles'
 import { PortalHero } from './PortalHero'
+import { pushScreen, readScreen, type ScreenName } from './backStack'
 
 // The mission screen (lab, solver, tutor, quiz) is not needed for first paint, so it is its own chunk.
 const loadMissionView = () => import('../features/missions/MissionView').then(m => ({ default: m.MissionView }))
@@ -15,7 +16,7 @@ function prefetchMissionChunks() {
   if ('requestIdleCallback' in window) window.requestIdleCallback(run, { timeout: 4000 })
   else setTimeout(run, 1500)
 }
-type Screen = 'portal' | 'map' | 'mission'
+type Screen = ScreenName
 
 /**
  * Top-level shell. State-based screens (no router: no deep links yet): portal -> mission map -> mission.
@@ -23,7 +24,20 @@ type Screen = 'portal' | 'map' | 'mission'
  * Guests start with one button; there is no login (R1).
  */
 export function AppShell() {
-  const [screen, setScreen] = useState<Screen>('portal')
+  const [screen, setScreenState] = useState<Screen>('portal')
+  // Each screen is a history entry so the Android Back button (and the browser's) steps mission -> map -> start
+  // instead of leaving the app. Overlays add their own entry on top (see useBackToClose).
+  const setScreen = (next: Screen) => {
+    if (next === screen) return
+    pushScreen(next)
+    setScreenState(next)
+  }
+  useEffect(() => {
+    window.history.replaceState({ ...(window.history.state ?? {}), wvScreen: 'portal' }, '')
+    const onPop = (e: PopStateEvent) => setScreenState(readScreen(e.state))
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
   const missionId = useMissionStore(s => s.missionId)
   const mainRef = useRef<HTMLElement>(null)
   useApplyMotionAttribute()
@@ -46,23 +60,25 @@ export function AppShell() {
       >
         Skip to main content
       </a>
-      <header className="border-b border-observatory-navy-lighter bg-observatory-navy-light/80 px-4 py-3 shadow-[0_1px_0_rgba(84,229,211,0.12)] md:px-8">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
-          <p className="text-xl font-bold tracking-tight text-observatory-aqua">
+      <header className="border-b border-observatory-navy-lighter bg-observatory-navy-light/80 px-4 py-2 shadow-[0_1px_0_rgba(84,229,211,0.12)] sm:py-3 md:px-8 [@media(max-height:500px)]:py-1">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-3 gap-y-1">
+          <p className="text-lg font-bold tracking-tight text-observatory-aqua sm:text-xl">
             WonderVerse <span className="text-observatory-gold">AI</span>
           </p>
           {screen !== 'portal' ? (
-            <nav aria-label="Lab navigation" className="flex items-center gap-3">
-              <span className="hidden text-sm text-slate-300 sm:inline">
+            <nav aria-label="Lab navigation" className="flex items-center gap-1 sm:gap-3">
+              <span className="hidden text-sm text-slate-300 sm:inline [@media(max-height:500px)]:hidden">
                 Electricity Lab{screen === 'mission' ? ` · Mission ${missionIndex(missionId) + 1}` : ''}
               </span>
               {screen === 'mission' && (
-                <button type="button" className={secondaryButton} onClick={() => setScreen('map')}>
-                  Back to missions
+                <button type="button" className={secondaryButton} aria-label="Back to missions" onClick={() => setScreen('map')}>
+                  <span className="sm:hidden">Missions</span>
+                  <span className="hidden sm:inline">Back to missions</span>
                 </button>
               )}
-              <button type="button" className={ghostButton} onClick={() => setScreen('portal')}>
-                Back to start
+              <button type="button" className={ghostButton} aria-label="Back to start" onClick={() => setScreen('portal')}>
+                <span className="sm:hidden">Start</span>
+                <span className="hidden sm:inline">Back to start</span>
               </button>
             </nav>
           ) : (
@@ -70,7 +86,7 @@ export function AppShell() {
           )}
         </div>
       </header>
-      <main id="main-content" ref={mainRef} tabIndex={-1} className="outline-none mx-auto w-full max-w-7xl flex-1 px-4 py-6 md:px-8">
+      <main id="main-content" ref={mainRef} tabIndex={-1} className="outline-none mx-auto w-full max-w-7xl flex-1 px-4 py-3 sm:py-6 md:px-8 [@media(max-height:500px)]:py-1">
         {screen === 'portal' ? (
           <PortalHero onEnter={() => setScreen('map')} />
         ) : screen === 'map' ? (
@@ -79,7 +95,7 @@ export function AppShell() {
           <>
             <h1
               tabIndex={-1}
-              className="mb-4 text-2xl font-bold text-observatory-aqua outline-none md:text-3xl"
+              className="mb-2 text-xl font-bold text-observatory-aqua outline-none sm:mb-4 sm:text-2xl md:text-3xl [@media(max-height:500px)]:sr-only"
             >
               Electricity Lab
             </h1>

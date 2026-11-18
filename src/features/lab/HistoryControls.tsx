@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ConfirmDialog } from '../../ui/ConfirmDialog'
+import { RedoIcon, ResetIcon, UndoIcon } from '../../ui/icons'
 import { secondaryButton } from '../../ui/styles'
 import { graphsEqual, useLabStore } from './labStore'
 function isTextEntry(target: EventTarget | null): boolean {
@@ -39,25 +40,38 @@ export function HistoryControls() {
     return () => window.removeEventListener('keydown', onKey)
   }, [undo, redo])
   const resetDisabled = !hasBaseline || atSetup
+  // On a phone the three buttons share one row (icon and a short label). The accessible names stay "Undo", "Redo" and
+  // "Reset circuit". Keyboard shortcut text is for people with a keyboard: it is visually hidden on touch devices
+  // (pointer: coarse) but stays in the page for screen readers.
+  const compact = `${secondaryButton} flex-1 sm:flex-none`
   return (
-    <section aria-label="Undo and reset" className="flex flex-wrap items-center gap-3">
-      <button type="button" className={secondaryButton} disabled={!canUndo} onClick={undo}>
-        Undo
-      </button>
-      <button type="button" className={secondaryButton} disabled={!canRedo} onClick={redo}>
-        Redo
-      </button>
-      <button
-        type="button"
-        className={secondaryButton}
-        disabled={resetDisabled}
-        aria-describedby="history-help"
-        onClick={() => setConfirming(true)}
-      >
-        Reset circuit
-      </button>
-      <p id="history-help" className="text-xs text-slate-400">
-        Shortcuts: Ctrl+Z or Cmd+Z to undo, Shift+Ctrl+Z or Shift+Cmd+Z to redo.{' '}
+    <section aria-label="Undo and reset" className="flex flex-wrap items-center gap-2 sm:gap-3">
+      <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:gap-3">
+        <button type="button" className={compact} disabled={!canUndo} onClick={undo}>
+          <UndoIcon className="h-5 w-5" />
+          Undo
+        </button>
+        <button type="button" className={compact} disabled={!canRedo} onClick={redo}>
+          <RedoIcon className="h-5 w-5" />
+          Redo
+        </button>
+        <button
+          type="button"
+          className={compact}
+          disabled={resetDisabled}
+          aria-describedby="history-help"
+          aria-label="Reset circuit"
+          onClick={() => setConfirming(true)}
+        >
+          <ResetIcon className="h-5 w-5" />
+          <span className="sm:hidden">Reset</span>
+          <span className="hidden sm:inline">Reset circuit</span>
+        </button>
+      </div>
+      <p id="history-help" className="text-xs text-slate-400 max-sm:sr-only [@media(max-height:500px)]:sr-only">
+        <span className="[@media(pointer:coarse)]:sr-only">
+          Shortcuts: Ctrl+Z or Cmd+Z to undo, Shift+Ctrl+Z or Shift+Cmd+Z to redo.{' '}
+        </span>
         {!hasBaseline
           ? 'Reset is available inside a mission.'
           : atSetup

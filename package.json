@@ -4,9 +4,9 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && npm run build:api && vite build",
-    "build:api": "node scripts/build-api.mjs",
+    "dev": "node init && vite",
+    "build": "node init && tsc -b && npm run build:api && vite build",
+    "build:api": "node init && node scripts/build-api.mjs",
     "check:api": "node scripts/build-api.mjs --check",
     "lint": "eslint .",
     "preview": "vite preview",

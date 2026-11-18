@@ -1,4 +1,5 @@
 import { panel, panelHeading } from '../../ui/styles'
+import { Collapsible } from '../../ui/Collapsible'
 import { CircuitDiagnostic } from './CircuitDiagnostic'
 import { ComponentTray } from './ComponentTray'
 import { FeedbackBar } from './FeedbackBar'
@@ -27,18 +28,19 @@ export function SchematicEditor() {
         if (e.key === 'Escape') cancelConnection()
       }}
     >
-      <ComponentTray />
-
-      <p className="text-sm text-slate-300">
-        Connect two terminals: click or press Enter on the first, then the second. Escape cancels. With a part or wire
-        focused, Delete removes it. To move a part, drag it, or focus it and use the arrow keys (Shift for bigger
-        steps). Undo reverses a move.
-      </p>
-
       <FeedbackBar feedback={feedback}>
         {pending && <span className="sr-only"> Pending source: {terminalLabel(graph, pending)}.</span>}
       </FeedbackBar>
+      {/* The circuit comes first, then the tray, then the long instructions (folded away on a phone). */}
       <SchematicCanvas graph={graph} report={report} />
+      <ComponentTray />
+      <Collapsible title="Help: building and moving parts" breakpoint="sm">
+        <p className="text-sm text-slate-300">
+          Connect two terminals: click, tap or press Enter on the first, then the second. Escape cancels. With a part or
+          wire focused, Delete removes it. To move a part, drag it, or focus it and use the arrow keys (Shift for bigger
+          steps). Undo reverses a move.
+        </p>
+      </Collapsible>
 
       {/* minmax(0,1fr): an implicit auto column grows to the widest child's min-content (the diagnostic table) and
           pushes the page sideways at 320 px when the fallback font is wide (seen with Linux fonts in CI). */}

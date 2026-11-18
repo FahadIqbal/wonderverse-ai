@@ -44,6 +44,8 @@ export interface LabSceneProps {
   onToggleSwitch?: (componentId: string) => void
   /** Same labStore action the schematic and keyboard use. Called once per finished drag, never per frame. */
   onMoveComponent?: (componentId: string, position: { x: number; y: number }) => void
+  /** Called once, after the first frame has been rendered. The parent treats a missing first frame as a failed 3D view. */
+  onFirstFrame?: () => void
 }
 
 // docs/04 palette, shared with Tailwind and the CSS variables.
@@ -590,6 +592,16 @@ function FitCamera() {
   }, [camera, size.width, size.height])
   return null
 }
+/** Reports the first rendered frame once. Without it the parent cannot tell a working scene from a silent failure. */
+function FrameProbe({ onFirstFrame }: { onFirstFrame?: () => void }) {
+  const done = useRef(false)
+  useFrame(() => {
+    if (done.current) return
+    done.current = true
+    onFirstFrame?.()
+  })
+  return null
+}
 export default function LabScene(props: LabSceneProps) {
   return (
     <Canvas
@@ -600,6 +612,7 @@ export default function LabScene(props: LabSceneProps) {
       style={{ touchAction: 'none' }}
     >
       <FitCamera />
+      <FrameProbe onFirstFrame={props.onFirstFrame} />
       <Scene {...props} />
     </Canvas>
   )

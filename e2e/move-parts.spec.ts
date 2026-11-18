@@ -1,5 +1,6 @@
 import type { Locator, Page } from '@playwright/test'
 import { test, expect } from './fixtures'
+import { VIEW_WIDTH } from '../src/features/lab/stageScale'
 import { LOOP_1, axeViolations, benchPointOnScreen, enterLab, expectLampEnergized, openApp, openMission, selectView, wireByKeyboard } from './helpers'
 
 const part = (page: Page, id: string) => page.locator(`[data-component-id="${id}"]`)
@@ -21,7 +22,7 @@ async function centerStage(page: Page, view: 'schematic' | '3d') {
 /** Units per CSS pixel in the schematic svg, so pixel drags can be turned into expected grid positions. */
 async function unitsPerPixel(page: Page) {
   const box = await page.getByRole('group', { name: 'Circuit schematic' }).boundingBox()
-  return 680 / box!.width
+  return VIEW_WIDTH / box!.width
 }
 async function dragBy(page: Page, from: { x: number; y: number }, to: { x: number; y: number }, steps = 12) {
   await page.mouse.move(from.x, from.y)

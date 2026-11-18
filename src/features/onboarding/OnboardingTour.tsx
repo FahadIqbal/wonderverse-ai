@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useBackToClose } from '../../app/backStack'
 import { panel, primaryButton, secondaryButton } from '../../ui/styles'
 import { TOUR_STEPS } from './tourSteps'
 interface Props {
@@ -11,6 +12,8 @@ interface Props {
  */
 export function OnboardingTour({ onClose }: Props) {
   const [index, setIndex] = useState(0)
+  // Android Back closes the tour first instead of leaving the lab.
+  useBackToClose(true, onClose)
   const heading = useRef<HTMLHeadingElement>(null)
   const step = TOUR_STEPS[index]
   const last = index === TOUR_STEPS.length - 1
@@ -28,7 +31,7 @@ export function OnboardingTour({ onClose }: Props) {
     <section
       aria-labelledby="tour-heading"
       data-testid="onboarding-tour"
-      className={`${panel} border-observatory-gold`}
+      className={`${panel} border-observatory-gold max-sm:fixed max-sm:inset-x-2 max-sm:bottom-2 max-sm:z-30 max-sm:max-h-[55vh] max-sm:overflow-y-auto max-sm:p-3 max-sm:shadow-[0_-8px_30px_rgba(0,0,0,0.6)]`}
       onKeyDown={e => {
         if (e.key === 'Escape') onClose()
       }}

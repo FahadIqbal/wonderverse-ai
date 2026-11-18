@@ -1,20 +1,25 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { useEffect } from 'react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createEmptyGraph } from '../../domain/circuit'
 
-const mocks = vi.hoisted(() => ({ webgl: true, crash: false, loseContext: null as null | (() => void) }))
+const mocks = vi.hoisted(() => ({ webgl: true, crash: false, draw: true, loseContext: null as null | (() => void) }))
 
 vi.mock('./scene/webgl', () => ({ isWebGLAvailable: () => mocks.webgl }))
 vi.mock('./scene/LabScene', () => ({
-  default: ({ graph, onContextLost }: { graph: { components: unknown[] }; onContextLost?: () => void }) => {
+  default: ({ graph, onContextLost, onFirstFrame }: { graph: { components: unknown[] }; onContextLost?: () => void; onFirstFrame?: () => void }) => {
     mocks.loseContext = onContextLost ?? null
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useEffect(() => {
+      if (mocks.draw) onFirstFrame?.()
+    }, [onFirstFrame])
     if (mocks.crash) throw new Error('scene crashed')
     return <div data-testid="fake-scene">scene with {graph.components.length} parts</div>
   },
 }))
 
-import { LabWorkbench } from './LabWorkbench'
+import { FIRST_FRAME_TIMEOUT_MS, LabWorkbench } from './LabWorkbench'
 import { useLabStore } from './labStore'
 import { allowConsole } from '../../test/consoleGuard'
 
@@ -22,6 +27,7 @@ describe('LabWorkbench', () => {
   beforeEach(() => {
     mocks.webgl = true
     mocks.crash = false
+    mocks.draw = true
     useLabStore.setState({ graph: createEmptyGraph(), pendingTerminalId: null, feedback: null })
   })
 
@@ -79,5 +85,36 @@ describe('LabWorkbench', () => {
     expect(await screen.findByTestId('fake-scene')).toHaveTextContent('scene with 1 parts')
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: '3D workbench' })).toHaveFocus()
+  })
+  describe('first-frame watchdog', () => {
+    afterEach(() => vi.useRealTimers())
+    it('never leaves an empty stage: with no frame after the timeout it explains and shows the schematic, keeping the circuit', () => {
+      vi.useFakeTimers()
+      mocks.draw = false
+      useLabStore.getState().addComponent('battery')
+      render(<LabWorkbench />)
+      expect(screen.getByTestId('fake-scene')).toBeInTheDocument()
+      act(() => void vi.advanceTimersByTime(FIRST_FRAME_TIMEOUT_MS - 100))
+      expect(screen.queryByTestId('fallback-note')).not.toBeInTheDocument()
+      act(() => void vi.advanceTimersByTime(200))
+      expect(screen.getByTestId('fallback-note')).toHaveTextContent(/did not draw anything/)
+      expect(screen.queryByTestId('fake-scene')).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Terminal Battery 1 positive' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Try 3D again' })).toBeInTheDocument()
+    })
+    it('keeps the 3D view when the first frame arrives in time', () => {
+      vi.useFakeTimers()
+      render(<LabWorkbench />)
+      act(() => void vi.advanceTimersByTime(FIRST_FRAME_TIMEOUT_MS * 2))
+      expect(screen.getByTestId('fake-scene')).toBeInTheDocument()
+      expect(screen.queryByTestId('fallback-note')).not.toBeInTheDocument()
+    })
+    it('offers a manual switch to the schematic under the 3D stage', async () => {
+      const user = userEvent.setup()
+      render(<LabWorkbench />)
+      await user.click(await screen.findByRole('button', { name: 'Use the schematic instead' }))
+      expect(screen.queryByTestId('fake-scene')).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Schematic' })).toHaveAttribute('aria-pressed', 'true')
+    })
   })
 })

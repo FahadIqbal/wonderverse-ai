@@ -31,7 +31,12 @@ class MemoryStorage implements Storage {
 if (typeof window !== 'undefined') {
   Object.defineProperty(window, 'localStorage', { value: new MemoryStorage(), configurable: true })
   installConsoleGuard()
-  afterEach(() => {
+  afterEach(async () => {
     cleanup()
+    // Closing an overlay pops the history entry it added (see useBackToClose). jsdom delivers that popstate
+    // asynchronously, so let it land here instead of in the next test.
+    await Promise.resolve()
+    const state = window.history.state as Record<string, unknown> | null
+    if (state && 'wvOverlay' in state) await new Promise(r => setTimeout(r, 30))
   })
 }
