@@ -1,4 +1,4 @@
-import { useEffect, useRef, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react'
 import {
   FOOTPRINT,
   LARGE_STEP_CELLS,
@@ -13,6 +13,7 @@ import { PALETTE } from '../../ui/palette'
 import { pointerKind } from './drag/dragController'
 import { useComponentDrag } from './drag/useComponentDrag'
 import { terminalLabel, useLabStore } from './labStore'
+import { DEFAULT_STAGE_PX, VIEW_WIDTH, VIEW_X, bodyHitSize, labelFontSize, stageScale, terminalHitRadius, terminalHitShift } from './stageScale'
 import { useRecentlyAdded, useRejectionPulse } from './useFeedbackMotion'
 import { useMotionPreference } from './useMotionPreference'
 
@@ -30,8 +31,11 @@ function isDeleteKey(e: KeyboardEvent) {
 
 const center = componentPosition
 
-/** Schematic viewBox width. The svg is drawn at 1:1 or larger, so client pixels map to units by rect.width / this. */
-const VIEW_WIDTH = 680
+/**
+ * Schematic viewBox: the bench (part centres 80 to 580, parts 90 wide, terminals 35 either side) plus a margin. Fixed, so
+ * the picture does not jump while a part is dragged. The svg is always drawn at the container width (no sideways scroll)
+ * and client pixels map to model units by VIEW_WIDTH / rect.width. Model coordinates never change with the screen size.
+ */
 const ARROWS: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }
 
 const STROKE = PALETTE.aqua
@@ -97,7 +101,7 @@ function Symbol({ c, lit, pulse }: { c: CircuitComponent; lit: boolean; pulse: b
   }
 }
 
-function TerminalDot({ terminal, graph, pending }: { terminal: Terminal; graph: CircuitGraph; pending: boolean }) {
+function TerminalDot({ terminal, graph, pending, stagePx, side }: { terminal: Terminal; graph: CircuitGraph; pending: boolean; stagePx: number; side: -1 | 1 }) {
   const selectTerminal = useLabStore(s => s.selectTerminal)
   const label = terminalLabel(graph, terminal.id)
   return (
@@ -116,12 +120,19 @@ function TerminalDot({ terminal, graph, pending }: { terminal: Terminal; graph: 
         }
       }}
     >
-      {/* Invisible 44-unit hit area: the svg is shown at 1:1 or larger (see min width below), so this is a 44px target. */}
-      <circle cx={terminal.position.x} cy={terminal.position.y} r={22} fill="transparent" />
+      {/* Invisible hit area, sized in model units so it is at least 44 CSS px across at the current stage width, and moved
+          outward (away from the part) on a phone so it does not cover the middle of the part body. */}
+      <circle
+        cx={terminal.position.x + side * terminalHitShift(stagePx)}
+        cy={terminal.position.y}
+        r={terminalHitRadius(stagePx)}
+        fill="transparent"
+        data-testid="terminal-hit"
+      />
       <circle
         cx={terminal.position.x}
         cy={terminal.position.y}
-        r={9}
+        r={Math.max(9, 7 / stageScale(stagePx))}
         fill={pending ? GOLD : NAVY}
         stroke={pending ? GOLD : STROKE}
         strokeWidth={3}
@@ -132,6 +143,26 @@ function TerminalDot({ terminal, graph, pending }: { terminal: Terminal; graph: 
 export function SchematicCanvas({ graph: storedGraph, report }: Props) {
   const moveComponent = useLabStore(s => s.moveComponent)
   const svgRef = useRef<SVGSVGElement>(null)
+  const [stagePx, setStagePx] = useState(DEFAULT_STAGE_PX)
+  // Track the real drawn size so hit areas and labels can be sized for it. The svg may be letterboxed (on a phone held
+  // sideways its height is capped), so the scale is the smaller of the width and height ratios. jsdom has no layout:
+  // it keeps the default.
+  const viewHeightRef = useRef(260)
+  useLayoutEffect(() => {
+    const el = svgRef.current
+    if (!el) return
+    const read = () => {
+      const r = el.getBoundingClientRect()
+      if (r.width <= 0 || r.height <= 0) return
+      const px = Math.min(r.width, (r.height * VIEW_WIDTH) / viewHeightRef.current)
+      setStagePx(Math.round(px))
+    }
+    read()
+    if (typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(read)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
   const suppressClick = useRef(false)
   const drag = useComponentDrag(storedGraph, moveComponent)
   // While a part is being dragged, draw it (and so its wires) at the snapped preview spot. The store changes on drop.
@@ -151,9 +182,19 @@ export function SchematicCanvas({ graph: storedGraph, report }: Props) {
     return () => svg.removeEventListener('touchmove', stop)
   }, [getDragState])
   const layoutPoint = (e: ReactPointerEvent) => {
-    const rect = svgRef.current?.getBoundingClientRect()
+    const svg = svgRef.current
+    // The browser's own transform handles the viewBox origin and any letterboxing.
+    const ctm = svg?.getScreenCTM?.()
+    if (svg && ctm && svg.createSVGPoint) {
+      const pt = svg.createSVGPoint()
+      pt.x = e.clientX
+      pt.y = e.clientY
+      const p = pt.matrixTransform(ctm.inverse())
+      return { x: p.x, y: p.y }
+    }
+    const rect = svg?.getBoundingClientRect()
     const scale = rect && rect.width > 0 ? VIEW_WIDTH / rect.width : 1
-    return { x: (e.clientX - (rect?.left ?? 0)) * scale, y: (e.clientY - (rect?.top ?? 0)) * scale }
+    return { x: VIEW_X + (e.clientX - (rect?.left ?? 0)) * scale, y: (e.clientY - (rect?.top ?? 0)) * scale }
   }
   const pendingTerminalId = useLabStore(s => s.pendingTerminalId)
   const removeComponent = useLabStore(s => s.removeComponent)
@@ -168,21 +209,23 @@ export function SchematicCanvas({ graph: storedGraph, report }: Props) {
   const terminalPos = new Map<string, Terminal['position']>()
   for (const c of graph.components) for (const t of c.terminals) terminalPos.set(t.id, t.position)
   const maxY = Math.max(0, ...[...terminalPos.values()].map(p => p.y))
-  const height = Math.max(260, maxY + 110)
+  const height = Math.max(230, maxY + 100)
+  viewHeightRef.current = height
 
   return (
     <div
-      className={`overflow-x-auto rounded-2xl border border-observatory-navy-lighter bg-observatory-navy shadow-[inset_0_0_40px_rgba(84,229,211,0.04)] ${shaking ? 'reject-shake' : ''}`}
+      className={`overflow-hidden rounded-2xl border border-observatory-navy-lighter bg-observatory-navy shadow-[inset_0_0_40px_rgba(84,229,211,0.04)] ${shaking ? 'reject-shake' : ''}`}
       data-testid="schematic-stage"
       data-tour="ports"
       data-rejected={String(shaking)}
     >
     <svg
       ref={svgRef}
-      viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
+      viewBox={`${VIEW_X} 0 ${VIEW_WIDTH} ${height}`}
+      preserveAspectRatio="xMidYMid meet"
       role="group"
       aria-label="Circuit schematic"
-      className="w-full min-w-[680px] select-none"
+      className="block h-auto w-full select-none [@media(max-height:500px)]:max-h-[165px]"
     >
       {graph.components.length === 0 && (
         <g>
@@ -339,16 +382,22 @@ export function SchematicCanvas({ graph: storedGraph, report }: Props) {
                 className={`${isDragged ? 'opacity-100' : 'opacity-0'} group-hover:opacity-100 group-focus-visible:opacity-100`}
                 data-testid={`halo-${c.id}`}
               />
-              <rect x={x - 45} y={y - 32} width={90} height={64} fill="transparent" />
+              <rect
+                x={x - bodyHitSize(stagePx).width / 2}
+                y={y - bodyHitSize(stagePx).height / 2}
+                width={bodyHitSize(stagePx).width}
+                height={bodyHitSize(stagePx).height}
+                fill="transparent"
+              />
               <Symbol c={c} lit={lit} pulse={!calm} />
             </g>
-            <text x={x} y={y + 50} textAnchor="middle" fill={LABEL} fontSize={13}>
+            <text x={x} y={y + 50} textAnchor="middle" fill={LABEL} fontSize={labelFontSize(stagePx)}>
               {name}
               {c.type === 'lamp' ? (lit ? ' (lit)' : ' (off)') : ''}
               {isSwitch ? (c.isOn ? ' (closed)' : ' (open)') : ''}
             </text>
             {c.terminals.map(t => (
-              <TerminalDot key={t.id} terminal={t} graph={graph} pending={pendingTerminalId === t.id} />
+              <TerminalDot key={t.id} terminal={t} graph={graph} pending={pendingTerminalId === t.id} stagePx={stagePx} side={t.position.x < x ? -1 : 1} />
             ))}
           </g>
         )

@@ -60,3 +60,15 @@ Checks: axe in real Chrome after a keyboard move in the schematic (`e2e/move-par
 | "AI can be wrong; the circuit report is the source of truth" note | n/a | Shown (inside the `aria-describedby` note) only while a validated AI reply is on screen; before an answer with a remote tutor configured the note says an AI tutor may answer, otherwise the offline guide does | n/a | Changed |
 | Add part buttons when the bench is full | Not disabled (the learner can still remove parts, so the buttons stay in the tab order) | Error feedback in the existing live region with the alert icon and words: "The bench is full. Remove a part or move one to make room." No part is added and no undo step is recorded | Tab, Enter | New; unit and component tests |
 Checks: Vitest component tests for the labels and notes, route-mocked Playwright tests (AI path, 503, invented number, HTML reply, unsafe question sends no request) on desktop, tablet and mobile with the console guard on every test. Not checked: screen reader output of the source line and note, a real slow model (the 9 s wait was tested only with a mock that aborts), real AI replies.
+## Android pass (2026-11-18)
+| Action | Disabled / loading / error | Feedback and announcement | Keyboard | Status |
+|---|---|---|---|---|
+| 3D view draws no frame (blocked GPU, zero-size canvas, silent context failure) | After 6 s the 3D toggle is disabled and the schematic shows; Try 3D again is offered | Role alert: "The 3D workbench did not draw anything on this device..." and the circuit is kept | Focus goes to Try 3D again if nothing else holds it (existing behaviour) | Unit and E2E tested |
+| "Use the schematic instead" under the 3D stage | Always enabled | Switches view; the toggle reports aria-pressed | Normal button, 44 px | Added; for a canvas that draws but is not shown, which a script cannot detect |
+| Terminal and part touch targets on a phone | n/a | Terminal circles 44.5 px across at any width, shifted outward so the centre of a part still toggles or drags; part boxes at least 44 px | Unchanged (terminals and parts stay tabbable) | `stageScale.test.ts`, E2E at 390 px and 844x390 |
+| Help disclosures (schematic and 3D) | Closed on phones, open from 640 px | Button with `aria-expanded` and `aria-controls`; closed content is `display: none` | Space or Enter | E2E |
+| Objectives and Ask Nova (collapsible below 1024 px) | Open by default | Same pattern | Same | jsdom and E2E (existing tests unchanged) |
+| Keyboard shortcut text | n/a | Visually hidden on `pointer: coarse` but still read by screen readers; status sentence screen-reader only below 640 px | n/a | Added |
+| Android Back (tour, dialogs, screens) | n/a | Back closes the tour or dialog first; the screen steps mission, map, start | n/a | jsdom, Chromium `goBack()`, emulator hardware key |
+Checks: axe in real Chrome on the new layout (existing `a11y-and-touch.spec.ts` on desktop, tablet and mobile), touch-size audit unchanged and passing. Not checked: TalkBack, a real device.
+

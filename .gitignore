@@ -2,8 +2,6 @@ node_modules
 dist
 *.tsbuildinfo
 .DS_Store
-.env
-.env.*
 coverage
 !.env.example
 __pycache__
@@ -17,3 +15,4 @@ venv
 env/
 *.pyc
 .vercel
+config.bat

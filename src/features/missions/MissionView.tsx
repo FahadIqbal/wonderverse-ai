@@ -7,6 +7,8 @@ import { QuizPanel } from './QuizPanel'
 import { OnboardingTour } from '../onboarding/OnboardingTour'
 import { useSettingsStore } from '../lab/settingsStore'
 import { TutorPanel } from '../tutor/TutorPanel'
+import { Collapsible } from '../../ui/Collapsible'
+import { HelpIcon } from '../../ui/icons'
 import { solveCircuit } from '../../domain/circuit'
 import { buildRecap, missionIndex, nextMission } from '../../domain/learning'
 import { useLabStore } from '../lab/labStore'
@@ -63,18 +65,27 @@ export function MissionView({ onBackToMap }: { onBackToMap?: () => void } = {}) 
     queueMicrotask(() => howToPlay.current?.focus())
   }
   return (
-    <div className="flex flex-col gap-4">
+    <div className={`flex flex-col gap-4 ${showTour ? 'max-sm:pb-64' : ''}`}>
       {showTour && <OnboardingTour onClose={closeTour} />}
-      <div className="flex justify-end">
-        <button type="button" ref={howToPlay} className={secondaryButton} onClick={() => setTourReopened(true)}>
-          How to play
-        </button>
-      </div>
       <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         {/* The lab comes first in the DOM and on screen: it is the main activity. */}
-        <LabWorkbench />
+        <LabWorkbench
+          toolbarExtra={
+            <button
+              type="button"
+              ref={howToPlay}
+              className={`${secondaryButton} shrink-0 max-sm:px-3`}
+              onClick={() => setTourReopened(true)}
+            >
+              <HelpIcon className="h-5 w-5" />
+              How to play
+            </button>
+          }
+        />
         <aside aria-label="Mission panel" className="flex flex-col gap-4">
-          <MissionHUD />
+          <Collapsible title="Objectives, next step and hints" breakpoint="lg" defaultOpen>
+            <MissionHUD />
+          </Collapsible>
           <QuizPanel />
           <section aria-label="Finish mission" className={panel}>
             {complete ? (
@@ -108,7 +119,9 @@ export function MissionView({ onBackToMap }: { onBackToMap?: () => void } = {}) 
               </>
             )}
           </section>
-          <TutorPanel key={mission.id} />
+          <Collapsible title="Ask Nova, the tutor" breakpoint="lg" defaultOpen>
+            <TutorPanel key={mission.id} />
+          </Collapsible>
         </aside>
       </div>
       {complete && !dismissed && (
